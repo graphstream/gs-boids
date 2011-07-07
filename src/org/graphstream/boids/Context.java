@@ -32,7 +32,6 @@ package org.graphstream.boids;
 
 import java.util.HashMap;
 
-import org.graphstream.boids.gui.GUI;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.NodeFactory;
 import org.graphstream.graph.implementations.AdjacencyListGraph;
@@ -140,11 +139,6 @@ public class Context extends AdjacencyListGraph {
 	 */
 	protected ParticleBox pbox;
 
-	/**
-	 * The graphical interface.
-	 */
-	protected GUI gui;
-
 	// Attributes
 
 	/**
@@ -236,15 +230,6 @@ public class Context extends AdjacencyListGraph {
 	}
 
 	/**
-	 * The current GUI if any, else null.
-	 * 
-	 * @return The GUI or null of none was open.
-	 */
-	public GUI getGui() {
-		return gui;
-	}
-
-	/**
 	 * The GUI mouse particle.
 	 * 
 	 * @return The mouse particle.
@@ -323,20 +308,6 @@ public class Context extends AdjacencyListGraph {
 
 	public void setRemoveCaughtBoids(boolean removeCaughtBoids) {
 		this.removeCaughtBoids = removeCaughtBoids;
-	}
-
-	/**
-	 * Open a GUI to monitor what's going on.
-	 */
-	public void addGUI() {
-		if (gui == null) {
-			gui = new GUI(this);
-			/*
-			 * if (showMouse) { mouse = new Mouse("Mouse", this);
-			 * 
-			 * pbox.addParticle(mouse); }
-			 */
-		}
 	}
 
 	/**
@@ -432,7 +403,9 @@ public class Context extends AdjacencyListGraph {
 
 	public static void main(String... args) {
 		Context ctx = new Context();
+		
 		ctx.addAttribute("ui.quality");
+		ctx.addAttribute("ui.antialias");
 		ctx.display(false);
 		
 		for (int i = 0; i < 100; i++)
