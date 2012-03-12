@@ -9,6 +9,8 @@ import javax.swing.JFrame;
 import javax.swing.Timer;
 
 import org.graphstream.boids.Context;
+import org.graphstream.ui.swingViewer.Viewer;
+import org.graphstream.ui.swingViewer.util.Camera;
 
 public class GUI extends JFrame implements ActionListener
 {
@@ -77,4 +79,21 @@ public class GUI extends JFrame implements ActionListener
 			viewer.display();
 		}
     }
+	
+	public static void main(String args[]) {
+		Context ctx = new Context();
+		GUI gui = new GUI(ctx);
+		
+		for (int i = 0; i < 100; i++)
+			ctx.addNode(String.format("boid%03d", i));
+		
+		while (true) {
+			ctx.stepBegins(0);
+			
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException e) {
+			}
+		}
+	}
 }

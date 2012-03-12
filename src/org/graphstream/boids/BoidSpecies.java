@@ -51,7 +51,15 @@ public class BoidSpecies extends HashMap<String, Boid> {
 	/**
 	 * The distance at which a boid is seen.
 	 */
-	public double viewZone = 0.2f;
+	public double viewZone = 0.3f;
+
+	/**
+	 * The boid angle of view, [-1..1]. This is the cosine of the angle between the boid
+	 * direction and the direction toward another boid. -1 Means 360 degrees, all is visible.
+	 * 0 means 180 degrees only boids in front are visible, 0.5 means 90 degrees,
+	 * 0.25 means 45 degrees.
+	 */
+	public double angleOfView = -1;
 
 	/**
 	 * The boid speed at each step. This is the factor by which the speedFactor
@@ -77,7 +85,7 @@ public class BoidSpecies extends HashMap<String, Boid> {
 	 * divided by the number of boids seen. This factor is the importance of
 	 * this direction in the boid direction.
 	 */
-	public double directionFactor = 0.075f;
+	public double directionFactor = 0.1f;
 
 	/**
 	 * How much other visible boids attract a boid. The barycenter of the
@@ -85,7 +93,7 @@ public class BoidSpecies extends HashMap<String, Boid> {
 	 * boid an this barycenter. This factor is the importance of this vector in
 	 * the boid direction.
 	 */
-	public double attractionFactor = 0.1f;
+	public double attractionFactor = 0.2f;
 
 	/**
 	 * All the visible boids repulse the boid. The repulsion vector is the sum
@@ -99,7 +107,7 @@ public class BoidSpecies extends HashMap<String, Boid> {
 	 * The inertia is the importance of the boid previous direction in the boid
 	 * direction.
 	 */
-	public double inertia = 1.2f;
+	public double inertia = 1.1f;
 
 	/**
 	 * Factor for repulsion on boids of other species. The fear that this
@@ -121,7 +129,7 @@ public class BoidSpecies extends HashMap<String, Boid> {
 	 * The width of the particle in the GUI if any.
 	 */
 	public int width = 4;
-
+	
 	//protected DemographicManager demographicManager;
 
 	// Constructors

@@ -34,6 +34,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 
 import org.graphstream.graph.Graph;
+import org.graphstream.graph.implementations.AbstractGraph;
 import org.graphstream.graph.implementations.AdjacencyListNode;
 import org.miv.pherd.Particle;
 import org.miv.pherd.geom.Point3;
@@ -46,7 +47,7 @@ public class Boid extends AdjacencyListNode {
 	protected Forces forces;
 
 	public Boid(Graph graph, String id) {
-		super(graph, id);
+		super((AbstractGraph)graph, id);
 		particle = new BoidParticle((Context) graph);
 		species = ((Context) graph).getDefaultSpecies();
 		forces = getDefaultForces();
@@ -76,6 +77,7 @@ public class Boid extends AdjacencyListNode {
 		return new Forces.BasicForces();
 	}
 
+	@Override
 	protected void attributeChanged(String sourceId, long timeId,
 			String attribute, AttributeChangeEvent event, Object oldValue,
 			Object newValue) {
@@ -157,6 +159,7 @@ public class Boid extends AdjacencyListNode {
 			this.ctx = ctx;
 		}
 
+		@Override
 		public void move(int time) {
 			contacts = 0;
 			mySpeciesContacts = 0;
@@ -197,10 +200,12 @@ public class Boid extends AdjacencyListNode {
 			moved = true;
 		}
 
+		@Override
 		public void inserted() {
 
 		}
 
+		@Override
 		public void removed() {
 
 		}

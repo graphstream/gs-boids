@@ -11,10 +11,10 @@ import javax.media.opengl.glu.GLU;
 import javax.swing.JPanel;
 
 import org.graphstream.boids.Context;
-import org.miv.glutil.Buffer;
-import org.miv.glutil.BufferListener;
-import org.miv.glutil.SwingBuffer;
-import org.miv.glutil.geom.Cube;
+import org.graphstream.glutil.Buffer;
+import org.graphstream.glutil.BufferListener;
+import org.graphstream.glutil.SwingBuffer;
+import org.graphstream.glutil.geom.Cube;
 import org.miv.pherd.ParticleBoxListener;
 import org.miv.pherd.ParticleBoxListenerProxy;
 import org.miv.pherd.geom.Point3;
@@ -141,7 +141,7 @@ public class ParticleViewer extends JPanel implements ParticleBoxListener,
 
 	public void displayParticles() {
 		Iterator<? extends GraphicParticle> i = particles.values().iterator();
-		GL gl = buffer.getGl();
+		GL2 gl = (GL2)buffer.getGl();
 
 		while (i.hasNext()) {
 			GraphicParticle p = i.next();

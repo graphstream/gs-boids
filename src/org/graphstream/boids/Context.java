@@ -35,6 +35,10 @@ import java.util.HashMap;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.NodeFactory;
 import org.graphstream.graph.implementations.AdjacencyListGraph;
+import org.graphstream.ui.spriteManager.Sprite;
+import org.graphstream.ui.spriteManager.SpriteManager;
+import org.graphstream.ui.swingViewer.Viewer;
+import org.graphstream.ui.swingViewer.util.Camera;
 import org.miv.pherd.ParticleBox;
 import org.miv.pherd.ntree.Anchor;
 import org.miv.pherd.ntree.CellSpace;
@@ -182,9 +186,11 @@ public class Context extends AdjacencyListGraph {
 	 */
 	public Context() {
 		super("boids-context");
-		nodeFactory = new BoidFactory();
+		setNodeFactory(new BoidFactory());
+		//nodeFactory = new BoidFactory();
 		boidSpecies = new HashMap<String, BoidSpecies>();
-		boidSpecies.put("default", new BoidSpecies(this, "default"));
+		//boidSpecies.put("default", new BoidSpecies(this, "default"));
+		getOrCreateSpecies("default");
 		space = new OctreeCellSpace(new Anchor(-2, -2, -2), new Anchor(2, 2, 2));
 		pbox = new ParticleBox(maxParticlesPerCell, space, new BoidCellData());
 	}
@@ -338,6 +344,7 @@ public class Context extends AdjacencyListGraph {
 		}
 	}
 
+	@Override
 	public void stepBegins(double step) {
 		pbox.step();
 	}
@@ -353,6 +360,7 @@ public class Context extends AdjacencyListGraph {
 		}
 	}
 
+	@Override
 	protected void attributeChanged(String sourceId, long timeId,
 			String attribute, AttributeChangeEvent event, Object oldValue,
 			Object newValue) {
@@ -403,12 +411,19 @@ public class Context extends AdjacencyListGraph {
 
 	public static void main(String... args) {
 		Context ctx = new Context();
+		BoidSpecies species = ctx.getDefaultSpecies();
+		species.angleOfView = -1;
 		
 		ctx.addAttribute("ui.quality");
 		ctx.addAttribute("ui.antialias");
-		ctx.display(false);
+		ctx.addAttribute("ui.stylesheet", "node { size: 4px; } edge { fill-color: grey; }");
+		Viewer viewer = ctx.display(false);
+
+		Camera cam = viewer.getDefaultView().getCamera();
 		
-		for (int i = 0; i < 100; i++)
+		cam.setGraphViewport(-2, -2, 2, 2);
+		
+		for (int i = 0; i < species.count; i++)
 			ctx.addNode(String.format("boid%03d", i));
 
 		while (true) {

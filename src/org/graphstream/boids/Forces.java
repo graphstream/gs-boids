@@ -259,9 +259,42 @@ public abstract class Forces {
 		 *            The point to consider.
 		 * @return A true if point is visible.
 		 */
-		protected boolean isVisible(BoidParticle source, Point3 point) {
+/*		protected boolean isVisible(BoidParticle source, Point3 point) {
 			double d = point.distance(source.getPosition());
 			return (d <= source.getBoid().getSpecies().viewZone);
+		}
+*/
+		protected boolean isVisible(BoidParticle source, Point3 point) {
+			// Check both the distance and angle of view according to the direction
+			// of the source.
+			
+			BoidSpecies species = source.getBoid().getSpecies();
+
+			Point3 pos = source.getPosition();
+			double d   = pos.distance(point);
+			
+			// At good distance.
+			if(d <= species.viewZone) {
+				// If there is an angle of view.
+				if(species.angleOfView > -1) {
+					Vector3 dir   = new Vector3(source.dir);
+					Vector3 light = new Vector3(point.x - pos.x, point.y - pos.y, point.z - pos.z);//(pos.x - point.x, pos.y - point.y, pos.z - point.z);
+					
+					dir.normalize();
+					light.normalize();
+					
+					double  angle = dir.dotProduct(light);
+				
+					// In the field of view.
+					if(angle > species.angleOfView)
+						return true;
+				} else {
+					return true;
+				}
+			}
+			
+			// Not in view.
+			return false;
 		}
 
 		protected void actionWithNeighboor(BoidParticle p1, BoidParticle p2,

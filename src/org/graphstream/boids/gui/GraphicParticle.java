@@ -7,7 +7,7 @@ import java.util.LinkedList;
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 
-import org.miv.glutil.geom.Geometry;
+import org.graphstream.glutil.geom.Geometry;
 import org.miv.pherd.geom.Point3;
 import org.miv.pherd.geom.Vector3;
 
@@ -102,12 +102,10 @@ public class GraphicParticle implements Geometry {
 			positions.addFirst(oldPos);
 	}
 
-	public void delete(GL gl) {
+	public void delete(GL2 gl) {
 	}
 
-	public void display(GL tgl) {
-		GL2 gl = tgl.getGL2();
-
+	public void display(GL2 gl) {
 		double x = pos.x;
 		double y = pos.y;
 		double z = pos.z;
