@@ -479,6 +479,7 @@ public class SwingBuffer
 	public void display()
 	{
 		canvas.display();
+		canvas.swapBuffers();
 	}
 
 	/**

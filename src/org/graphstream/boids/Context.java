@@ -191,7 +191,7 @@ public class Context extends AdjacencyListGraph {
 		boidSpecies = new HashMap<String, BoidSpecies>();
 		//boidSpecies.put("default", new BoidSpecies(this, "default"));
 		getOrCreateSpecies("default");
-		space = new OctreeCellSpace(new Anchor(-2, -2, -2), new Anchor(2, 2, 2));
+		space = new OctreeCellSpace(new Anchor(-area, -area, -area), new Anchor(area, area, area));
 		pbox = new ParticleBox(maxParticlesPerCell, space, new BoidCellData());
 	}
 

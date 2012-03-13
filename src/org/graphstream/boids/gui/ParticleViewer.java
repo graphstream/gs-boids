@@ -57,7 +57,7 @@ public class ParticleViewer extends JPanel implements ParticleBoxListener,
 
 	protected float near = 1f;
 
-	protected float radius = 1.03f, theta, phi;
+	protected float radius = 1.3f, theta, phi;
 
 	protected Point3 camera;
 
@@ -67,7 +67,7 @@ public class ParticleViewer extends JPanel implements ParticleBoxListener,
 
 	protected Cube env;
 
-	protected Color background = new Color(0, 0, 0);
+	protected Color background = new Color(255, 255, 255);
 
 	// Constructors
 
@@ -201,7 +201,7 @@ public class ParticleViewer extends JPanel implements ParticleBoxListener,
 
 	public void display(Buffer buffer) {
 		setView();
-		// displayEnv();
+		displayEnv();
 		displayParticles();
 	}
 

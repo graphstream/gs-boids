@@ -8,6 +8,7 @@ import java.awt.event.ActionListener;
 import javax.swing.JFrame;
 import javax.swing.Timer;
 
+import org.graphstream.boids.BoidSpecies;
 import org.graphstream.boids.Context;
 import org.graphstream.ui.swingViewer.Viewer;
 import org.graphstream.ui.swingViewer.util.Camera;
@@ -83,7 +84,9 @@ public class GUI extends JFrame implements ActionListener
 	public static void main(String args[]) {
 		Context ctx = new Context();
 		GUI gui = new GUI(ctx);
-		
+		BoidSpecies species = ctx.getDefaultSpecies();
+		species.angleOfView = 0;
+
 		for (int i = 0; i < 100; i++)
 			ctx.addNode(String.format("boid%03d", i));
 		
