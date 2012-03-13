@@ -43,7 +43,7 @@ import org.miv.pherd.ParticleBox;
 import org.miv.pherd.ntree.Anchor;
 import org.miv.pherd.ntree.CellSpace;
 import org.miv.pherd.ntree.OctreeCellSpace;
-import org.util.Environment;
+//import org.util.Environment;
 
 import java.util.Random;
 
@@ -131,10 +131,7 @@ public class Context extends AdjacencyListGraph {
 
 	// Attribute
 
-	/**
-	 * The environment.
-	 */
-	protected Environment env;
+	//protected Environment env;
 
 	protected CellSpace space;
 
@@ -217,14 +214,9 @@ public class Context extends AdjacencyListGraph {
 		return maxParticlesPerCell;
 	}
 
-	/**
-	 * The current environment.
-	 * 
-	 * @return The environment.
-	 */
-	public Environment getEnv() {
-		return env;
-	}
+//	public Environment getEnv() {
+//		return env;
+//	}
 
 	/**
 	 * The current particle box.
