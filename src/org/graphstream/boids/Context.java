@@ -421,7 +421,7 @@ public class Context extends AdjacencyListGraph {
 
 		Camera cam = viewer.getDefaultView().getCamera();
 		
-		cam.setGraphViewport(-2, -2, 2, 2);
+		cam.setGraphViewport(-ctx.area, -ctx.area, ctx.area, ctx.area);
 		
 		for (int i = 0; i < species.count; i++)
 			ctx.addNode(String.format("boid%03d", i));

@@ -30,8 +30,10 @@
  */
 package org.graphstream.boids;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Set;
 
 import org.graphstream.boids.Boid.BoidParticle;
 import org.miv.pherd.Particle;
@@ -125,8 +127,12 @@ public abstract class Forces {
 			repulsion.fill(0);
 			countAtt = 0;
 			countRep = 0;
+			
+			Set<BoidParticle> contacts = new HashSet<BoidParticle>();
 
-			exploreTree(source, startCell);
+			exploreTree(source, startCell, contacts);
+			
+			source.checkNeighborhood(contacts.toArray(new BoidParticle[contacts.size()]));
 			
 			if (countAtt > 0) {
 				barycenter.scale(1f / countAtt, 1f / countAtt, 1f / countAtt);
@@ -150,15 +156,15 @@ public abstract class Forces {
 		 * @param cell
 		 *            The cell to explore recursively.
 		 */
-		protected void exploreTree(Boid source, Cell cell) {
+		protected void exploreTree(Boid source, Cell cell, Set<BoidParticle> contacts) {
 			if (intersection(source, cell)) {
 				if (cell.isLeaf()) {
-					forcesFromCell(source.getParticle(), cell);
+					forcesFromCell(source.getParticle(), cell, contacts);
 				} else {
 					int n = cell.getSpace().getDivisions();
 
 					for (int i = 0; i < n; ++i)
-						exploreTree(source, cell.getSub(i));
+						exploreTree(source, cell.getSub(i), contacts);
 				}
 			}
 		}
@@ -172,18 +178,18 @@ public abstract class Forces {
 		 * @param cell
 		 *            The cell.
 		 */
-		protected void forcesFromCell(BoidParticle source, Cell cell) {
+		protected void forcesFromCell(BoidParticle source, Cell cell, Set<BoidParticle> contacts) {
 			// BoidCellData data = (BoidCellData) cell.getData();
 			Iterator<? extends Particle> particles = cell.getParticles();
 			Vector3 rep = new Vector3();
-			LinkedList<BoidParticle> contacts = null;
+			//LinkedList<BoidParticle> contacts = null;
 
 			while (particles.hasNext()) {
 				Particle particle = particles.next();
 
 				if (particle instanceof BoidParticle) {
-					if (contacts == null)
-						contacts = new LinkedList<BoidParticle>();
+					//if (contacts == null)
+					//	contacts = new LinkedList<BoidParticle>();
 
 					if (source != particle
 							&& isVisible(source, particle.getPosition())) {
@@ -194,9 +200,9 @@ public abstract class Forces {
 				}
 			}
 
-			source.getBoid().checkNeighborhood(
-					contacts == null ? null : contacts
-							.toArray(new BoidParticle[contacts.size()]));
+//			source.getBoid().checkNeighborhood(
+//					contacts == null ? null : contacts
+//							.toArray(new BoidParticle[contacts.size()]));
 
 			// barycenter.move( data.getCenter() );
 			// direction.add( data.getDirection() );

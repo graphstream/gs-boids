@@ -92,16 +92,16 @@ public class Boid extends AdjacencyListNode {
 	}
 
 	protected void checkNeighborhood(BoidParticle... particles) {
-System.err.printf("Boid %s :%n", id);
+//System.err.printf("Boid %s :%n", id);
 		if (particles != null) {
 			Iterator<Boid> it = getNeighborNodeIterator();
 			LinkedList<Boid> toRemove = null;
 
-System.err.printf("Sees [ ");
-for(BoidParticle p : particles) {
-	System.err.printf("%s ", p.getBoid().id);
-}
-System.err.printf("]%nHas Neighbors [ ");
+//System.err.printf("Sees [ ");
+//for(BoidParticle p : particles) {
+//	System.err.printf("%s ", p.getBoid().id);
+//}
+//System.err.printf("]%nHas Neighbors [ ");
 			while (it.hasNext()) {
 				boolean found = false;
 				Boid b = it.next();
@@ -112,17 +112,17 @@ System.err.printf("]%nHas Neighbors [ ");
 						break;
 					}
 				}
-System.err.printf("%s(%b)", b.id, found);
+//System.err.printf("%s(%b)", b.id, found);
 				
 				if (!found && !forces.isVisible(b.particle, this.getPosition())) {
 					if (toRemove == null)
 						toRemove = new LinkedList<Boid>();
-System.err.printf("(del)");
+//System.err.printf("(del)");
 
 					toRemove.add(b);
 				}
 			}
-System.err.printf("%n");
+//System.err.printf("%n");
 
 			if (toRemove != null) {
 				for (Boid b : toRemove)
@@ -131,16 +131,16 @@ System.err.printf("%n");
 				toRemove.clear();
 				toRemove = null;
 			}
-System.err.printf("adds link to [ ");
+//System.err.printf("adds link to [ ");
 			for (BoidParticle p : particles) {
 				if (getEdgeBetween(p.getBoid().getId()) == null) {
 					getGraph().addEdge(getEdgeId(this, p.getBoid()), getId(),
 							p.getBoid().getId());
-System.err.printf("%s ", p.getBoid().id);
+//System.err.printf("%s ", p.getBoid().id);
 				}
 			}
 		}
-System.err.printf("]%n");
+//System.err.printf("]%n");
 	}
 
 	public static final String getEdgeId(Boid b1, Boid b2) {

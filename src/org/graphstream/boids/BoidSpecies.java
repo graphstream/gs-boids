@@ -51,7 +51,7 @@ public class BoidSpecies extends HashMap<String, Boid> {
 	/**
 	 * The distance at which a boid is seen.
 	 */
-	public double viewZone = 0.3f;
+	public double viewZone = 0.15f;
 
 	/**
 	 * The boid angle of view, [-1..1]. This is the cosine of the angle between the boid
@@ -67,7 +67,7 @@ public class BoidSpecies extends HashMap<String, Boid> {
 	 * accelerate the boid displacement, it also impacts the boid behaviour
 	 * (oscillation around the destination point, etc.)
 	 */
-	public double speedFactor = 0.5f;
+	public double speedFactor = 0.3f;
 
 	/**
 	 * Maximum speed bound.
@@ -93,7 +93,7 @@ public class BoidSpecies extends HashMap<String, Boid> {
 	 * boid an this barycenter. This factor is the importance of this vector in
 	 * the boid direction.
 	 */
-	public double attractionFactor = 0.2f;
+	public double attractionFactor = 0.5f;
 
 	/**
 	 * All the visible boids repulse the boid. The repulsion vector is the sum
@@ -101,7 +101,7 @@ public class BoidSpecies extends HashMap<String, Boid> {
 	 * boid, scaled by the number of visible boids. This factor is the
 	 * importance of this vector in the boid direction.
 	 */
-	public double repulsionFactor = 0.002f;
+	public double repulsionFactor = 0.001f;
 
 	/**
 	 * The inertia is the importance of the boid previous direction in the boid
