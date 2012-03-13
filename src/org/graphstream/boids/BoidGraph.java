@@ -1,14 +1,12 @@
 /*
- * Copyright 2006 - 2011 
- *     Julien Baudry	<julien.baudry@graphstream-project.org>
+ * Copyright 2006 - 2012
  *     Antoine Dutot	<antoine.dutot@graphstream-project.org>
- *     Yoann Pigné		<yoann.pigne@graphstream-project.org>
  *     Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
  * 
- * This file is part of GraphStream <http://graphstream-project.org>.
+ * This file is part of gs-boids <http://graphstream-project.org>.
  * 
- * GraphStream is a library whose purpose is to handle static or dynamic
- * graph, create them from scratch, file or any source and display them.
+ * gs-boids is a library whose purpose is to provide a boid behavior to a set of
+ * particles.
  * 
  * This program is free software distributed under the terms of two licenses, the
  * CeCILL-C license that fits European law, and the GNU Lesser General Public
@@ -57,7 +55,7 @@ import java.util.Random;
  * @author Guilhelm Savin
  * @author Antoine Dutot
  */
-public class Context extends AdjacencyListGraph {
+public class BoidGraph extends AdjacencyListGraph {
 
 	public static enum Parameter {
 		MAX_STEPS, AREA, SLEEP_TIME, STORE_FORCES_ATTRIBUTES, REMOVE_CAUGHT_BOIDS, NORMALIZE_MODE, RANDOM_SEED
@@ -131,7 +129,7 @@ public class Context extends AdjacencyListGraph {
 	/**
 	 * New context.
 	 */
-	public Context() {
+	public BoidGraph() {
 		super("boids-context");
 		setNodeFactory(new BoidFactory());
 
@@ -153,7 +151,7 @@ public class Context extends AdjacencyListGraph {
 		pbox = new ParticleBox(maxParticlesPerCell, space, new BoidCellData());
 	}
 
-	public Context(String dgsConfig) throws IOException {
+	public BoidGraph(String dgsConfig) throws IOException {
 		this();
 		loadDGSConfiguration(dgsConfig);
 	}
@@ -279,7 +277,7 @@ public class Context extends AdjacencyListGraph {
 			else {
 				try {
 					Class<?> classObj = Class.forName(clazz);
-					Object obj = classObj.getConstructor(Context.class,
+					Object obj = classObj.getConstructor(BoidGraph.class,
 							String.class).newInstance(this, name);
 
 					if (obj instanceof BoidSpecies) {
@@ -406,6 +404,15 @@ public class Context extends AdjacencyListGraph {
 		return loop;
 	}
 
+	@Override
+	public Viewer display(boolean autoLayout) {
+		Viewer v = super.display(autoLayout);
+		Camera cam = v.getDefaultView().getCamera();
+		cam.setGraphViewport(-area, -area, area, area);
+
+		return v;
+	}
+
 	protected void sleep(int milliseconds) {
 		try {
 			Thread.sleep(milliseconds);
@@ -498,33 +505,16 @@ public class Context extends AdjacencyListGraph {
 	}
 
 	public static void main(String... args) {
-		Context ctx = new Context();
-		// BoidSpecies species = ctx.addDefaultSpecies();
-		// species.angleOfView = 0;
-		// species.setCount(100);
+		BoidGraph ctx = new BoidGraph();
 
 		try {
-			ctx.loadDGSConfiguration(Context.class
+			ctx.loadDGSConfiguration(BoidGraph.class
 					.getResourceAsStream("configExample.dgs"));
 		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
 
-		Viewer viewer = ctx.display(false);
-
-		Camera cam = viewer.getDefaultView().getCamera();
-
-		cam.setGraphViewport(-ctx.area, -ctx.area, ctx.area, ctx.area);
-
-		// species.setCount(100);
-
-		while (true) {
-			ctx.stepBegins(0);
-
-			try {
-				Thread.sleep(50);
-			} catch (InterruptedException e) {
-			}
-		}
+		ctx.display(false);
+		ctx.loop();
 	}
 }

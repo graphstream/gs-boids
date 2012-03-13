@@ -1,14 +1,12 @@
 /*
- * Copyright 2006 - 2011 
- *     Julien Baudry	<julien.baudry@graphstream-project.org>
+ * Copyright 2006 - 2012
  *     Antoine Dutot	<antoine.dutot@graphstream-project.org>
- *     Yoann Pigné		<yoann.pigne@graphstream-project.org>
  *     Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
  * 
- * This file is part of GraphStream <http://graphstream-project.org>.
+ * This file is part of gs-boids <http://graphstream-project.org>.
  * 
- * GraphStream is a library whose purpose is to handle static or dynamic
- * graph, create them from scratch, file or any source and display them.
+ * gs-boids is a library whose purpose is to provide a boid behavior to a set of
+ * particles.
  * 
  * This program is free software distributed under the terms of two licenses, the
  * CeCILL-C license that fits European law, and the GNU Lesser General Public
@@ -33,7 +31,6 @@ package org.graphstream.boids;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-import org.graphstream.graph.Graph;
 import org.graphstream.graph.implementations.AbstractGraph;
 import org.graphstream.graph.implementations.AdjacencyListNode;
 import org.miv.pherd.Particle;
@@ -44,18 +41,19 @@ import org.miv.pherd.geom.Vector3;
  * Represents a single bird-oid object.
  * 
  * <p>
- * A boid is both a particle in the forces system used to compute the position and motion
- * of the object, and a GraphStream node. This allows to consider a graph made of
- * all the boids.
+ * A boid is both a particle in the forces system used to compute the position
+ * and motion of the object, and a GraphStream node. This allows to consider a
+ * graph made of all the boids.
  * </p>
  * 
  * <p>
- * The boid is in fact split in two parts, the {@link Boid} class itself and the 
- * {@link BoidParticle} inner class that represents the boid in the forces system. The
- * boid particle in turn contains a {@link Forces} object that represents all the forces
- * exercising on the boid. Globally, the {@link Boid} class acts on the graph and updates
- * its position, creating links toward other boids/nodes that it sees, whereas the
- * {@link BoidParticle} and the {@link Forces} are used to compute the boid position. 
+ * The boid is in fact split in two parts, the {@link Boid} class itself and the
+ * {@link BoidParticle} inner class that represents the boid in the forces
+ * system. The boid particle in turn contains a {@link BoidForces} object that
+ * represents all the forces exercising on the boid. Globally, the {@link Boid}
+ * class acts on the graph and updates its position, creating links toward other
+ * boids/nodes that it sees, whereas the {@link BoidParticle} and the
+ * {@link BoidForces} are used to compute the boid position.
  * </p>
  * 
  * @author Guilhelm Savin
@@ -65,42 +63,52 @@ public class Boid extends AdjacencyListNode {
 
 	protected final BoidSpecies species;
 	protected BoidParticle particle;
-	
+
 	/** Parameters of this group of boids. */
-	
+
 	/** The set of forces acting on this particle. */
-	protected Forces forces;
+	protected BoidForces forces;
 
 	/**
 	 * New boid as a node in the given graph.
-	 *
-	 * @param graph The graph this boids pertains to.
-	 * @param id The boid identifier in the graph and in the force system.
+	 * 
+	 * @param graph
+	 *            The graph this boids pertains to.
+	 * @param id
+	 *            The boid identifier in the graph and in the force system.
 	 */
-		super((AbstractGraph) graph, id);
+	public Boid(AbstractGraph graph, BoidSpecies species, String id) {
+		super(graph, id);
 
-		this.particle = new BoidParticle((Context) graph);
+		this.particle = new BoidParticle((BoidGraph) graph);
 		this.species = species;
 		this.forces = getDefaultForces();
 	}
 
-	/** Force the position of the boid in space. */
+	/**
+	 * Force the position of the boid in space.
+	 */
 	public void setPosition(double x, double y, double z) {
 		particle.setPosition(x, y, z);
 	}
 
-	/** Actual position of the boid in space. */
+	/**
+	 * Actual position of the boid in space.
+	 */
 	public Point3 getPosition() {
 		return particle.getPosition();
 	}
 
-	/** Set of parameters used by this boid group. */
+	/**
+	 * Set of parameters used by this boid group.
+	 */
 	public BoidSpecies getSpecies() {
 		return species;
 	}
 
-	/** Change boid group and set of parameters. */
-	/** The underlying particle of the force system this boids is linked to. */
+	/**
+	 * The underlying particle of the force system this boids is linked to.
+	 */
 	public BoidParticle getParticle() {
 		return particle;
 	}
@@ -109,8 +117,8 @@ public class Boid extends AdjacencyListNode {
 	 * The forces acting on the boids, this is a set of vectors and parameters
 	 * computed at each time step.
 	 */
-	public Forces getDefaultForces() {
-		return new Forces.BasicForces();
+	public BoidForces getDefaultForces() {
+		return new BoidForces.BasicForces();
 	}
 
 	protected void checkNeighborhood(BoidParticle... particles) {
@@ -154,9 +162,10 @@ public class Boid extends AdjacencyListNode {
 	}
 
 	/**
-	 * Compute the edge identifier between two boids knowing their individual identifiers.
-	 * This method ensures the identifiers are always in the same order so that we get the
-	 * same edge whatever the order of the parameters b1 and b2. 
+	 * Compute the edge identifier between two boids knowing their individual
+	 * identifiers. This method ensures the identifiers are always in the same
+	 * order so that we get the same edge whatever the order of the parameters
+	 * b1 and b2.
 	 */
 	public static final String getEdgeId(Boid b1, Boid b2) {
 		if (b1.hashCode() > b2.hashCode()) {
@@ -169,29 +178,40 @@ public class Boid extends AdjacencyListNode {
 	}
 
 	/**
-	 * Internal representation of the boid position, and direction in the forces system.
+	 * Internal representation of the boid position, and direction in the forces
+	 * system.
 	 * 
 	 * @author Guilhelm Savin
 	 * @author Antoine Dutot
 	 */
 	class BoidParticle extends Particle {
-		/** Direction of the boid. */
+		/**
+		 * Direction of the boid.
+		 */
 		protected Vector3 dir;
-		
-		/** Set of global parameters. */
-		protected Context ctx;
 
-		/** Number of boids in view at each step. */
+		/**
+		 * Set of global parameters.
+		 */
+		protected BoidGraph ctx;
+
+		/**
+		 * Number of boids in view at each step.
+		 */
 		protected int contacts = 0;
-		
-		/** Number of boids of my group in view at each step. */
+
+		/**
+		 * Number of boids of my group in view at each step.
+		 */
 		protected int mySpeciesContacts = 0;
 
-		/** 
+		/**
 		 * New particle.
-		 * @param ctx The set of global parameters.
+		 * 
+		 * @param ctx
+		 *            The set of global parameters.
 		 */
-		public BoidParticle(Context ctx) {
+		public BoidParticle(BoidGraph ctx) {
 			super(Boid.this.getId(), ctx.random.nextDouble() * (ctx.area * 2)
 					- ctx.area, ctx.random.nextDouble() * (ctx.area * 2)
 					- ctx.area, 0);

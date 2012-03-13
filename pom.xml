@@ -86,9 +86,12 @@
 
 		<resources>
 			<!-- Resources other than classes are included here. -->
-			<!--<resource>
+			<resource>
 				<directory>src</directory>
-			</resource>-->
+				<includes>
+					<include>org/graphstream/boids/configExample.dgs</include>
+				</includes>
+			</resource>
 		</resources>
 
 		<plugins>
@@ -97,9 +100,6 @@
 				<configuration>
 					<source>1.5</source>
 					<target>1.5</target>
-					<excludes>
-					  <exclude>org/graphstream/boids/gui/**</exclude>
-					</excludes>
 				</configuration>
 			</plugin>
 

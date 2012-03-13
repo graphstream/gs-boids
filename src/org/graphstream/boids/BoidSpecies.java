@@ -1,10 +1,38 @@
+/*
+ * Copyright 2006 - 2012
+ *     Antoine Dutot	<antoine.dutot@graphstream-project.org>
+ *     Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
+ * 
+ * This file is part of gs-boids <http://graphstream-project.org>.
+ * 
+ * gs-boids is a library whose purpose is to provide a boid behavior to a set of
+ * particles.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL <http://www.cecill.info> or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
 package org.graphstream.boids;
 
 import java.awt.Color;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import org.graphstream.boids.Context;
+import org.graphstream.boids.BoidGraph;
 
 /**
  * Parameters for each boids species.
@@ -15,7 +43,9 @@ import org.graphstream.boids.Context;
 public class BoidSpecies implements Iterable<Boid> {
 	private static final long serialVersionUID = 6005548670964581065L;
 
-	/** Kinds of parameters. */
+	/**
+	 * Kinds of parameters.
+	 */
 	public static enum Parameter {
 		COUNT, ANGLE_OF_VIEW, VIEW_ZONE, SPEED_FACTOR, MAX_SPEED, MIN_SPEED, WIDTH, TRAIL, DIRECTION_FACTOR, ATTRACTION_FACTOR, REPULSION_FACTOR, INERTIA, FEAR_FACTOR
 	}
@@ -23,7 +53,7 @@ public class BoidSpecies implements Iterable<Boid> {
 	/**
 	 * Shared settings.
 	 */
-	protected Context ctx;
+	protected BoidGraph ctx;
 
 	/**
 	 * The species name.
@@ -102,9 +132,9 @@ public class BoidSpecies implements Iterable<Boid> {
 	 */
 	protected Color color = new Color(1, 0, 0);
 
-//	/**
-//	 * The size of the trail in the GUI if any.
-//	 */
+	// /**
+	// * The size of the trail in the GUI if any.
+	// */
 	protected int trail = 0;
 
 	/**
@@ -115,10 +145,11 @@ public class BoidSpecies implements Iterable<Boid> {
 	protected HashMap<String, Boid> boids;
 	private int currentIndex = 0;
 	private long timestamp = System.nanoTime();
+
 	/**
 	 * New default species with a random color.
 	 */
-	public BoidSpecies(Context ctx, String name) {
+	public BoidSpecies(BoidGraph ctx, String name) {
 		this.boids = new HashMap<String, Boid>();
 		this.ctx = ctx;
 		this.name = name;
@@ -129,6 +160,7 @@ public class BoidSpecies implements Iterable<Boid> {
 	public String getName() {
 		return name;
 	}
+
 	public Iterator<Boid> iterator() {
 		return boids.values().iterator();
 	}
@@ -160,9 +192,9 @@ public class BoidSpecies implements Iterable<Boid> {
 		case WIDTH:
 			width = Integer.parseInt(val);
 			break;
-//		case TRAIL:
-//			trail = Integer.parseInt(val);
-//			break;
+		// case TRAIL:
+		// trail = Integer.parseInt(val);
+		// break;
 		case DIRECTION_FACTOR:
 			directionFactor = Double.parseDouble(val);
 			break;
@@ -211,7 +243,6 @@ public class BoidSpecies implements Iterable<Boid> {
 
 	public int getPopulation() {
 		return boids.size();
-	 */
 	}
 
 	/**
@@ -220,12 +251,6 @@ public class BoidSpecies implements Iterable<Boid> {
 	public void setCount(int count) {
 		while (boids.size() < count)
 			ctx.addNode(createNewId());
-	/**
-	 * The species name.
-	 */
-	/**
-	 * Change the species name.
-	 */
 	}
 
 	/**
@@ -347,8 +372,8 @@ public class BoidSpecies implements Iterable<Boid> {
 	}
 
 	/**
-	 * Change the inertia is the importance of the boid previous direction in the boid
-	 * direction.
+	 * Change the inertia is the importance of the boid previous direction in
+	 * the boid direction.
 	 */
 	public void setInertia(double inertia) {
 		this.inertia = inertia;
@@ -383,9 +408,9 @@ public class BoidSpecies implements Iterable<Boid> {
 		this.color = color;
 	}
 
-//	public void setTrail(int trail) {
-//		this.trail = trail;
-//	}
+	// public void setTrail(int trail) {
+	// this.trail = trail;
+	// }
 
 	/**
 	 * Change the width of the particle in the GUI if any.
