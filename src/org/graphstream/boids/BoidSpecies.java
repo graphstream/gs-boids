@@ -38,7 +38,7 @@ public class BoidSpecies extends HashMap<String, Boid> {
 	/**
 	 * Initial number of boids of this species.
 	 */
-	public int count = 200;
+	public int count = 300;
 
 	/**
 	 * The species name.
