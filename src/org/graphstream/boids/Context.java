@@ -412,7 +412,7 @@ public class Context extends AdjacencyListGraph {
 	public static void main(String... args) {
 		Context ctx = new Context();
 		BoidSpecies species = ctx.getDefaultSpecies();
-		species.angleOfView = -1;
+		species.angleOfView = 0;
 		
 		ctx.addAttribute("ui.quality");
 		ctx.addAttribute("ui.antialias");

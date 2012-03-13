@@ -106,7 +106,7 @@ public class Boid extends AdjacencyListNode {
 						break;
 					}
 
-				if (!found) {
+				if (!found && !forces.isVisible(b.particle, this.getPosition())) {
 					if (toRemove == null)
 						toRemove = new LinkedList<Boid>();
 

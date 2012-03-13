@@ -108,6 +108,8 @@ public abstract class Forces {
 	public void moveBarycenter(Point3 p) {
 		barycenter.move(p);
 	}
+	
+	public abstract boolean isVisible(BoidParticle boid, Point3 other); 
 
 	/**
 	 * A definition of the forces.
@@ -264,7 +266,8 @@ public abstract class Forces {
 			return (d <= source.getBoid().getSpecies().viewZone);
 		}
 */
-		protected boolean isVisible(BoidParticle source, Point3 point) {
+		@Override
+		public boolean isVisible(BoidParticle source, Point3 point) {
 			// Check both the distance and angle of view according to the direction
 			// of the source.
 			
