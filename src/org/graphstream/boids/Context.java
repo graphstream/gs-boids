@@ -35,8 +35,6 @@ import java.util.HashMap;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.NodeFactory;
 import org.graphstream.graph.implementations.AdjacencyListGraph;
-import org.graphstream.ui.spriteManager.Sprite;
-import org.graphstream.ui.spriteManager.SpriteManager;
 import org.graphstream.ui.swingViewer.Viewer;
 import org.graphstream.ui.swingViewer.util.Camera;
 import org.miv.pherd.ParticleBox;
