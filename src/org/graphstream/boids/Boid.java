@@ -40,13 +40,43 @@ import org.miv.pherd.Particle;
 import org.miv.pherd.geom.Point3;
 import org.miv.pherd.geom.Vector3;
 
+/**
+ * Represents a single bird-oid object.
+ * 
+ * <p>
+ * A boid is both a particle in the forces system used to compute the position and motion
+ * of the object, and a GraphStream node. This allows to consider a graph made of
+ * all the boids.
+ * </p>
+ * 
+ * <p>
+ * The boid is in fact split in two parts, the {@link Boid} class itself and the 
+ * {@link BoidParticle} inner class that represents the boid in the forces system. The
+ * boid particle in turn contains a {@link Forces} object that represents all the forces
+ * exercising on the boid. Globally, the {@link Boid} class acts on the graph and updates
+ * its position, creating links toward other boids/nodes that it sees, whereas the
+ * {@link BoidParticle} and the {@link Forces} are used to compute the boid position. 
+ * </p>
+ * 
+ * @author Guilhelm Savin
+ * @author Antoine Dutot
+ */
 public class Boid extends AdjacencyListNode {
 
 	protected final BoidSpecies species;
 	protected BoidParticle particle;
+	
+	/** Parameters of this group of boids. */
+	
+	/** The set of forces acting on this particle. */
 	protected Forces forces;
 
-	public Boid(Graph graph, BoidSpecies species, String id) {
+	/**
+	 * New boid as a node in the given graph.
+	 *
+	 * @param graph The graph this boids pertains to.
+	 * @param id The boid identifier in the graph and in the force system.
+	 */
 		super((AbstractGraph) graph, id);
 
 		this.particle = new BoidParticle((Context) graph);
@@ -54,37 +84,40 @@ public class Boid extends AdjacencyListNode {
 		this.forces = getDefaultForces();
 	}
 
+	/** Force the position of the boid in space. */
 	public void setPosition(double x, double y, double z) {
 		particle.setPosition(x, y, z);
 	}
 
+	/** Actual position of the boid in space. */
 	public Point3 getPosition() {
 		return particle.getPosition();
 	}
 
+	/** Set of parameters used by this boid group. */
 	public BoidSpecies getSpecies() {
 		return species;
 	}
 
+	/** Change boid group and set of parameters. */
+	/** The underlying particle of the force system this boids is linked to. */
 	public BoidParticle getParticle() {
 		return particle;
 	}
 
+	/**
+	 * The forces acting on the boids, this is a set of vectors and parameters
+	 * computed at each time step.
+	 */
 	public Forces getDefaultForces() {
 		return new Forces.BasicForces();
 	}
 
 	protected void checkNeighborhood(BoidParticle... particles) {
-		// System.err.printf("Boid %s :%n", id);
 		if (particles != null) {
 			Iterator<Boid> it = getNeighborNodeIterator();
 			LinkedList<Boid> toRemove = null;
 
-			// System.err.printf("Sees [ ");
-			// for(BoidParticle p : particles) {
-			// System.err.printf("%s ", p.getBoid().id);
-			// }
-			// System.err.printf("]%nHas Neighbors [ ");
 			while (it.hasNext()) {
 				boolean found = false;
 				Boid b = it.next();
@@ -95,17 +128,14 @@ public class Boid extends AdjacencyListNode {
 						break;
 					}
 				}
-				// System.err.printf("%s(%b)", b.id, found);
 
 				if (!found && !forces.isVisible(b.particle, this.getPosition())) {
 					if (toRemove == null)
 						toRemove = new LinkedList<Boid>();
-					// System.err.printf("(del)");
 
 					toRemove.add(b);
 				}
 			}
-			// System.err.printf("%n");
 
 			if (toRemove != null) {
 				for (Boid b : toRemove)
@@ -114,18 +144,20 @@ public class Boid extends AdjacencyListNode {
 				toRemove.clear();
 				toRemove = null;
 			}
-			// System.err.printf("adds link to [ ");
 			for (BoidParticle p : particles) {
 				if (getEdgeBetween(p.getBoid().getId()) == null) {
 					getGraph().addEdge(getEdgeId(this, p.getBoid()), getId(),
 							p.getBoid().getId());
-					// System.err.printf("%s ", p.getBoid().id);
 				}
 			}
 		}
-		// System.err.printf("]%n");
 	}
 
+	/**
+	 * Compute the edge identifier between two boids knowing their individual identifiers.
+	 * This method ensures the identifiers are always in the same order so that we get the
+	 * same edge whatever the order of the parameters b1 and b2. 
+	 */
 	public static final String getEdgeId(Boid b1, Boid b2) {
 		if (b1.hashCode() > b2.hashCode()) {
 			Boid t = b1;
@@ -136,15 +168,29 @@ public class Boid extends AdjacencyListNode {
 		return String.format("%s--%s", b1.getId(), b2.getId());
 	}
 
+	/**
+	 * Internal representation of the boid position, and direction in the forces system.
+	 * 
+	 * @author Guilhelm Savin
+	 * @author Antoine Dutot
+	 */
 	class BoidParticle extends Particle {
+		/** Direction of the boid. */
 		protected Vector3 dir;
+		
+		/** Set of global parameters. */
 		protected Context ctx;
 
+		/** Number of boids in view at each step. */
 		protected int contacts = 0;
+		
+		/** Number of boids of my group in view at each step. */
 		protected int mySpeciesContacts = 0;
 
-		protected float energy = 0;
-
+		/** 
+		 * New particle.
+		 * @param ctx The set of global parameters.
+		 */
 		public BoidParticle(Context ctx) {
 			super(Boid.this.getId(), ctx.random.nextDouble() * (ctx.area * 2)
 					- ctx.area, ctx.random.nextDouble() * (ctx.area * 2)
@@ -189,21 +235,17 @@ public class Boid extends AdjacencyListNode {
 			checkWalls();
 			nextPos.move(dir);
 
-			Boid.this.setAttribute("x", pos.x);
-			Boid.this.setAttribute("y", pos.y);
-			Boid.this.setAttribute("z", pos.z);
+			Boid.this.setAttribute("xyz", pos.x, pos.y, pos.z);
 
 			moved = true;
 		}
 
 		@Override
 		public void inserted() {
-
 		}
 
 		@Override
 		public void removed() {
-
 		}
 
 		public Boid getBoid() {

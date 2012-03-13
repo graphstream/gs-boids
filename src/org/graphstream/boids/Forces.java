@@ -30,9 +30,9 @@
  */
 package org.graphstream.boids;
 
+import java.util.Set;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
 
 import org.graphstream.boids.Boid.BoidParticle;
 import org.miv.pherd.Particle;
@@ -41,19 +41,39 @@ import org.miv.pherd.geom.Vector3;
 import org.miv.pherd.ntree.Cell;
 
 /**
- * Models the forces applied to a boid.
+ * Models the forces applied to a boid at each step.
  * 
+ * <p>
+ * This object is modified at each computation step to represent the forces applied to
+ * a boid particle in the forces system. It is in charge of going down the n-tree used
+ * to represent space and collect all the other boids in the field of view that could influence
+ * this boid. It then integrates these forces and compute a direction and barycenter (the
+ * point the boid tries to reach).
+ * </p>
+ *
+ * @author Guilhelm Savin
  * @author Antoine Dutot
- * 
  */
 public abstract class Forces {
+	/** The position the boid tries to reach at each step. */
 	public Point3 barycenter;
+	
+	/** The direction of the boid at each step. */
 	public Vector3 direction;
+	
+	/** The integrated attraction toward other boids in view at each step. */
 	public Vector3 attraction;
+	
+	/** The integrated repulsion from the other boids in view at each step. */
 	public Vector3 repulsion;
+	
+	/** The number of boids we are attracted to. */
 	public int countAtt;
+	
+	/** The number of boids we are repulsed from. */
 	public int countRep;
 
+	/** Forces all set at zero. */
 	public Forces() {
 		barycenter = new Point3();
 		direction = new Vector3();
@@ -91,30 +111,42 @@ public abstract class Forces {
 		boid.setAttribute("force2", repulsion);
 	}
 
+	/** Integrate a repulsion vector. */
 	public void addRepulsion(Vector3 rep) {
 		repulsion.add(rep);
 		countRep++;
 	}
 
+	/** Integrate a direction influence. */
 	public void addDirection(Vector3 dir) {
 		direction.add(dir);
 		countAtt++;
 	}
 
+	/** Integrate an attraction vector. */
 	public void addAttraction(Vector3 att) {
 		attraction.add(att);
 		countAtt++;
 	}
 
+	/** Integrate a new point of influence. */
 	public void moveBarycenter(Point3 p) {
 		barycenter.move(p);
 	}
 	
+	/** Is the another point is space in the field of view? */
 	public abstract boolean isVisible(BoidParticle boid, Point3 other); 
 
 	/**
-	 * A definition of the forces.
+	 * A basic definition of forces for a boid.
 	 * 
+	 * <p>
+	 * The kind of forces exercising on a boid can be changed to either use a n-tree or not,
+	 * or to account for other kind of forces or another force model. This is the default
+	 * force system that matches the basic boid definition as defined by Craig Reynolds.
+	 * </p>
+	 * 
+	 * @author Guilhelm Savin
 	 * @author Antoine Dutot
 	 */
 	public static class BasicForces extends Forces {
@@ -199,10 +231,6 @@ public abstract class Forces {
 				}
 			}
 
-//			source.getBoid().checkNeighborhood(
-//					contacts == null ? null : contacts
-//							.toArray(new BoidParticle[contacts.size()]));
-
 			// barycenter.move( data.getCenter() );
 			// direction.add( data.getDirection() );
 		}
@@ -238,14 +266,14 @@ public abstract class Forces {
 			// intersection (cases c, d, e and f).
 			//
 			// |-a-| +---------+ |-b-|
-			// | |
-			// |-c-| |-d-|
-			// | |
-			// | |-e-| |
-			// | |
-			// |-+----f----+-|
-			// | |
-			// +---------+
+			//       |         |
+			//     |-c-|     |-d-|
+			//       |         |
+			//       |  |-e-|  |
+			//       |         |
+			//     |-+----f----+-|
+			//       |         |
+			//       +---------+
 
 			if (X2 < x1 || X1 > x2)
 				return false;
@@ -262,15 +290,23 @@ public abstract class Forces {
 		/**
 		 * True if the given position is visible by the boid.
 		 * 
+		 * <p>
+		 * This method first check if the given point is under the max distance of
+		 * view. If so, it checks if the point is in the angle of view. The angle
+		 * of view is specified as the cosine of the angle between the boid direction
+		 * vector and the vector between the boid and the given point. This means
+		 * that -1 is equal to a 360 degree of vision (the angle of view test is
+		 * deactivated in this case), 0 means 180 degree angle, and 0.5 a 90 degree
+		 * angle for example. 
+		 * </p>
+		 * 
+		 * @param source
+		 * 			  The source boid.
 		 * @param point
 		 *            The point to consider.
-		 * @return A true if point is visible.
+		 * 
+		 * @return True if point is visible by source.
 		 */
-/*		protected boolean isVisible(BoidParticle source, Point3 point) {
-			double d = point.distance(source.getPosition());
-			return (d <= source.getBoid().getSpecies().viewZone);
-		}
-*/
 		@Override
 		public boolean isVisible(BoidParticle source, Point3 point) {
 			// Check both the distance and angle of view according to the direction
@@ -305,6 +341,13 @@ public abstract class Forces {
 			return false;
 		}
 
+		/**
+		 * A boid particle p2 that is visible by p1 as been found, integrate it in the forces that
+		 * apply to the boid p1.
+		 * @param p1 The source boid.
+		 * @param p2 the boid visible by p1.
+		 * @param rep The repulsion to compute.
+		 */
 		protected void actionWithNeighboor(BoidParticle p1, BoidParticle p2,
 				Vector3 rep) {
 			Point3 pp = p2.getPosition();
