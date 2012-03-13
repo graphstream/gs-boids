@@ -42,15 +42,16 @@ import org.miv.pherd.geom.Vector3;
 
 public class Boid extends AdjacencyListNode {
 
+	protected final BoidSpecies species;
 	protected BoidParticle particle;
-	protected BoidSpecies species;
 	protected Forces forces;
 
-	public Boid(Graph graph, String id) {
-		super((AbstractGraph)graph, id);
-		particle = new BoidParticle((Context) graph);
-		species = ((Context) graph).getDefaultSpecies();
-		forces = getDefaultForces();
+	public Boid(Graph graph, BoidSpecies species, String id) {
+		super((AbstractGraph) graph, id);
+
+		this.particle = new BoidParticle((Context) graph);
+		this.species = species;
+		this.forces = getDefaultForces();
 	}
 
 	public void setPosition(double x, double y, double z) {
@@ -65,10 +66,6 @@ public class Boid extends AdjacencyListNode {
 		return species;
 	}
 
-	public void setSpecies(BoidSpecies species) {
-		this.species = species;
-	}
-
 	public BoidParticle getParticle() {
 		return particle;
 	}
@@ -77,31 +74,17 @@ public class Boid extends AdjacencyListNode {
 		return new Forces.BasicForces();
 	}
 
-	@Override
-	protected void attributeChanged(String sourceId, long timeId,
-			String attribute, AttributeChangeEvent event, Object oldValue,
-			Object newValue) {
-		if (attribute.equals("species")) {
-			Context ctx = (Context) getGraph();
-			BoidSpecies species = ctx.getOrCreateSpecies(newValue.toString());
-			this.species = species;
-		}
-
-		super.attributeChanged(sourceId, timeId, attribute, event, oldValue,
-				newValue);
-	}
-
 	protected void checkNeighborhood(BoidParticle... particles) {
-//System.err.printf("Boid %s :%n", id);
+		// System.err.printf("Boid %s :%n", id);
 		if (particles != null) {
 			Iterator<Boid> it = getNeighborNodeIterator();
 			LinkedList<Boid> toRemove = null;
 
-//System.err.printf("Sees [ ");
-//for(BoidParticle p : particles) {
-//	System.err.printf("%s ", p.getBoid().id);
-//}
-//System.err.printf("]%nHas Neighbors [ ");
+			// System.err.printf("Sees [ ");
+			// for(BoidParticle p : particles) {
+			// System.err.printf("%s ", p.getBoid().id);
+			// }
+			// System.err.printf("]%nHas Neighbors [ ");
 			while (it.hasNext()) {
 				boolean found = false;
 				Boid b = it.next();
@@ -112,17 +95,17 @@ public class Boid extends AdjacencyListNode {
 						break;
 					}
 				}
-//System.err.printf("%s(%b)", b.id, found);
-				
+				// System.err.printf("%s(%b)", b.id, found);
+
 				if (!found && !forces.isVisible(b.particle, this.getPosition())) {
 					if (toRemove == null)
 						toRemove = new LinkedList<Boid>();
-//System.err.printf("(del)");
+					// System.err.printf("(del)");
 
 					toRemove.add(b);
 				}
 			}
-//System.err.printf("%n");
+			// System.err.printf("%n");
 
 			if (toRemove != null) {
 				for (Boid b : toRemove)
@@ -131,16 +114,16 @@ public class Boid extends AdjacencyListNode {
 				toRemove.clear();
 				toRemove = null;
 			}
-//System.err.printf("adds link to [ ");
+			// System.err.printf("adds link to [ ");
 			for (BoidParticle p : particles) {
 				if (getEdgeBetween(p.getBoid().getId()) == null) {
 					getGraph().addEdge(getEdgeId(this, p.getBoid()), getId(),
 							p.getBoid().getId());
-//System.err.printf("%s ", p.getBoid().id);
+					// System.err.printf("%s ", p.getBoid().id);
 				}
 			}
 		}
-//System.err.printf("]%n");
+		// System.err.printf("]%n");
 	}
 
 	public static final String getEdgeId(Boid b1, Boid b2) {
@@ -167,8 +150,8 @@ public class Boid extends AdjacencyListNode {
 					- ctx.area, ctx.random.nextDouble() * (ctx.area * 2)
 					- ctx.area, 0);
 
-			this.dir = new Vector3(ctx.random.nextDouble(),
-					ctx.random.nextDouble(), 0);
+			this.dir = new Vector3(ctx.random.nextDouble(), ctx.random
+					.nextDouble(), 0);
 			this.ctx = ctx;
 		}
 
@@ -178,7 +161,7 @@ public class Boid extends AdjacencyListNode {
 			mySpeciesContacts = 0;
 
 			forces.compute(Boid.this, cell.getTree().getRootCell());
-			
+
 			forces.direction.scalarMult(species.directionFactor);
 			forces.attraction.scalarMult(species.attractionFactor);
 			forces.repulsion.scalarMult(species.repulsionFactor);
@@ -199,7 +182,7 @@ public class Boid extends AdjacencyListNode {
 			} else {
 				dir.scalarMult(species.speedFactor);
 			}
-			
+
 			if (ctx.storeForcesAttributes)
 				forces.store(this);
 

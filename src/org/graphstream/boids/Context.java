@@ -30,20 +30,23 @@
  */
 package org.graphstream.boids;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.NodeFactory;
+import org.graphstream.graph.implementations.AbstractNode;
 import org.graphstream.graph.implementations.AdjacencyListGraph;
-import org.graphstream.ui.spriteManager.Sprite;
-import org.graphstream.ui.spriteManager.SpriteManager;
+import org.graphstream.stream.file.FileSourceDGS;
 import org.graphstream.ui.swingViewer.Viewer;
 import org.graphstream.ui.swingViewer.util.Camera;
 import org.miv.pherd.ParticleBox;
 import org.miv.pherd.ntree.Anchor;
 import org.miv.pherd.ntree.CellSpace;
 import org.miv.pherd.ntree.OctreeCellSpace;
-import org.util.Environment;
 
 import java.util.Random;
 
@@ -55,86 +58,48 @@ import java.util.Random;
  * @author Antoine Dutot
  */
 public class Context extends AdjacencyListGraph {
-	// Attribute
+
+	public static enum Parameter {
+		MAX_STEPS, AREA, SLEEP_TIME, STORE_FORCES_ATTRIBUTES, REMOVE_CAUGHT_BOIDS, NORMALIZE_MODE, RANDOM_SEED
+	}
 
 	/**
 	 * Number of steps to run the simulation, 0 means infinity.
 	 */
-	public int maxSteps = 0;
+	protected int maxSteps;
 
 	/**
 	 * The radius of the explored area. The real area range is [-area..area] in
 	 * all three dimensions.
 	 */
-	public float area = 1;
-
-	/**
-	 * Number of species.
-	 */
-	public int speciesCount = 3;
-
-	/**
-	 * Maximum number of particles per cell.
-	 */
-	public int maxParticlesPerCell = 10;
+	protected float area;
 
 	/**
 	 * Number of milliseconds to sleep between each particle computation step.
 	 */
-	public int sleepTime = 20;
+	protected int sleepTime;
 
 	/**
 	 * Store the forces as attributes so that each listener can retrieve the
 	 * force vectors.
 	 */
-	public boolean storeForcesAttributes = false;
+	protected boolean storeForcesAttributes;
 
 	/**
 	 * Remove the boids caught by a predator ?.
 	 */
-	public boolean removeCaughtBoids = false;
+	protected boolean removeCaughtBoids;
 
 	/**
 	 * Normalise boids attraction/repulsion vectors (make the boids move
 	 * constantly, since very small vectors can be extended).
 	 */
-	public boolean normalizeMode = true;
-
-	/**
-	 * Actual configuration directory.
-	 */
-	public String configDir = System.getProperty("user.dir");
-
-	/**
-	 * The file separator.
-	 */
-	public String fileSep = System.getProperty("file.separator");
-
-	/**
-	 * Show a GUI to monitor boids ?.
-	 */
-	public boolean showGui = false;
-
-	/**
-	 * public void setSleepTime( int sleepTime ) { this.sleepTime = sleepTime; }
-	 * 
-	 * Add a mouse "boid" if the GUI is used.
-	 */
-	public boolean showMouse = false;
+	protected boolean normalizeMode;
 
 	/**
 	 * The fixed random seed.
 	 */
-	public long randomSeed = 1;
-
-	public String[] speciesFiles = null;
-
-	// Attribute
-
-	/**
-	 * The environment.
-	 */
-	protected Environment env;
+	protected long randomSeed;
 
 	protected CellSpace space;
 
@@ -143,67 +108,88 @@ public class Context extends AdjacencyListGraph {
 	 */
 	protected ParticleBox pbox;
 
-	// Attributes
-
 	/**
 	 * Species for boids.
 	 */
 	protected HashMap<String, BoidSpecies> boidSpecies;
 
 	/**
-	 * Species for the predator.
-	 */
-	// protected PredatorSpecies predatorSpecies;
-
-	/**
-	 * The mouse representation. The mouse is a particle like boids.
-	 */
-	// protected Mouse mouse;
-
-	/**
 	 * The main loop condition.
 	 */
-	protected boolean loop = false;
+	protected boolean loop;
 
 	/**
 	 * Current step.
 	 */
-	protected int step = 0;
+	protected int step;
 
 	/**
 	 * Random number generator.
 	 */
-	public Random random = new Random();
-
-	protected boolean enableFakeStop = false;
-
-	// Construction
+	protected Random random;
 
 	/**
-	 * New uninitialised context.
-	 * 
-	 * Use setup().
+	 * New context.
 	 */
 	public Context() {
 		super("boids-context");
 		setNodeFactory(new BoidFactory());
-		//nodeFactory = new BoidFactory();
+
+		int maxParticlesPerCell = 10;
+
+		random = new Random();
+		randomSeed = random.nextLong();
+		random = new Random(randomSeed);
+		loop = false;
+		normalizeMode = true;
+		removeCaughtBoids = false;
+		storeForcesAttributes = false;
+		sleepTime = 20;
+		area = 1;
+		maxSteps = 0;
 		boidSpecies = new HashMap<String, BoidSpecies>();
-		//boidSpecies.put("default", new BoidSpecies(this, "default"));
-		getOrCreateSpecies("default");
-		space = new OctreeCellSpace(new Anchor(-area, -area, -area), new Anchor(area, area, area));
+		space = new OctreeCellSpace(new Anchor(-area, -area, -area),
+				new Anchor(area, area, area));
 		pbox = new ParticleBox(maxParticlesPerCell, space, new BoidCellData());
 	}
 
-	// Access
-
-	public void setSpeciesFiles(String files) {
-		speciesFiles = files.split(",");
-
-		if (speciesFiles != null)
-			for (int i = 0; i < speciesFiles.length; i++)
-				speciesFiles[i] = speciesFiles[i].trim();
+	public Context(String dgsConfig) throws IOException {
+		this();
+		loadDGSConfiguration(dgsConfig);
 	}
+
+	/**
+	 * Load configuration from a dgs file. See 'configExample.dgs' for an
+	 * example of dgs configuration.
+	 * 
+	 * @param dgs
+	 *            path to the DGS file containing the configuration.
+	 * @throws IOException
+	 *             if something wrong happens with io.
+	 */
+	public void loadDGSConfiguration(String dgs) throws IOException {
+		FileInputStream in = new FileInputStream(dgs);
+		loadDGSConfiguration(in);
+		in.close();
+	}
+
+	/**
+	 * Load configuration from a dgs file. See 'configExample.dgs' for an
+	 * example of dgs configuration.
+	 * 
+	 * @param in
+	 * @throws IOException
+	 *             if something wrong happens with io.
+	 */
+	public void loadDGSConfiguration(InputStream in) throws IOException {
+		FileSourceDGS config = new FileSourceDGS();
+
+		config.addSink(this);
+		config.readAll(in);
+		config.removeSink(this);
+	}
+
+	// Access
 
 	public CellSpace getSpace() {
 		return space;
@@ -213,17 +199,62 @@ public class Context extends AdjacencyListGraph {
 		return area;
 	}
 
-	public int getMaxParticlesPerCell() {
-		return maxParticlesPerCell;
+	public void setArea(float area) {
+		this.area = area;
+
+		Anchor lo = new Anchor(-area, -area, -area);
+		Anchor hi = new Anchor(area, area, area);
+
+		this.space.resize(lo, hi);
 	}
 
-	/**
-	 * The current environment.
-	 * 
-	 * @return The environment.
-	 */
-	public Environment getEnv() {
-		return env;
+	public long getRandomSeed() {
+		return randomSeed;
+	}
+
+	public void setRandomSeed(long randomSeed) {
+		this.randomSeed = randomSeed;
+		this.random = new Random(randomSeed);
+	}
+
+	public int getSleepTime() {
+		return sleepTime;
+	}
+
+	public void setSleepTime(int sleepTime) {
+		this.sleepTime = sleepTime;
+	}
+
+	public boolean isCaughtBoidsRemoved() {
+		return removeCaughtBoids;
+	}
+
+	public void setRemoveCaughtBoids(boolean removeCaughtBoids) {
+		this.removeCaughtBoids = removeCaughtBoids;
+	}
+
+	public boolean isNormalizeMode() {
+		return normalizeMode;
+	}
+
+	public void setNormalizeMode(boolean on) {
+		normalizeMode = on;
+	}
+
+	public boolean isForcesAttributesStored() {
+		return storeForcesAttributes;
+	}
+
+	public void setStoreForcesAttributes(boolean storeForcesAttributes) {
+		this.storeForcesAttributes = storeForcesAttributes;
+	}
+
+	public int getMaxParticlesPerCell() {
+		return pbox.getNTree().getMaxParticlePerCell();
+	}
+
+	public void setMaxSteps(int maxSteps) {
+		this.maxSteps = maxSteps;
 	}
 
 	/**
@@ -235,22 +266,48 @@ public class Context extends AdjacencyListGraph {
 		return pbox;
 	}
 
-	/**
-	 * The GUI mouse particle.
-	 * 
-	 * @return The mouse particle.
-	 */
-	// public Mouse getMouse() {
-	// /// return mouse;
-	// }
-
 	public BoidSpecies getOrCreateSpecies(String name) {
+		return getOrCreateSpecies(name, null);
+	}
+
+	public BoidSpecies getOrCreateSpecies(String name, String clazz) {
 		BoidSpecies species = boidSpecies.get(name);
 
 		if (species == null) {
-			species = new BoidSpecies(this, name);
-			boidSpecies.put(name, species);
+			if (clazz == null)
+				species = new BoidSpecies(this, name);
+			else {
+				try {
+					Class<?> classObj = Class.forName(clazz);
+					Object obj = classObj.getConstructor(Context.class,
+							String.class).newInstance(this, name);
 
+					if (obj instanceof BoidSpecies) {
+						species = (BoidSpecies) obj;
+					} else {
+						String msg = String.format(
+								"not a species class : '%s'", clazz);
+
+						throw new RuntimeException(msg);
+					}
+				} catch (ClassNotFoundException e) {
+					throw new RuntimeException(e);
+				} catch (InstantiationException e) {
+					throw new RuntimeException(e);
+				} catch (IllegalAccessException e) {
+					throw new RuntimeException(e);
+				} catch (IllegalArgumentException e) {
+					throw new RuntimeException(e);
+				} catch (SecurityException e) {
+					throw new RuntimeException(e);
+				} catch (InvocationTargetException e) {
+					throw new RuntimeException(e);
+				} catch (NoSuchMethodException e) {
+					throw new RuntimeException(e);
+				}
+			}
+
+			boidSpecies.put(name, species);
 			System.out.printf("new species : %s\n", name);
 		}
 
@@ -269,6 +326,10 @@ public class Context extends AdjacencyListGraph {
 		return getSpecies("default");
 	}
 
+	public BoidSpecies addDefaultSpecies() {
+		return getOrCreateSpecies("default");
+	}
+
 	public void deleteSpecies(String name) {
 		if (!name.equals("default"))
 			boidSpecies.remove(name);
@@ -276,44 +337,36 @@ public class Context extends AdjacencyListGraph {
 
 	// Commands
 
-	public void setArea(float area) {
-		this.area = area;
+	public void set(String paramName, String value)
+			throws IllegalArgumentException {
+		Parameter param = Parameter.valueOf(paramName.toUpperCase());
+		set(param, value);
 	}
 
-	public void setSpeciesCount(int speciesCount) {
-		this.speciesCount = speciesCount;
-	}
-
-	public void setStoreForcesAttributes(boolean storeForcesAttributes) {
-		this.storeForcesAttributes = storeForcesAttributes;
-	}
-
-	public void setConfigDir(String configDir) {
-		this.configDir = configDir;
-	}
-
-	public void setShowGui(boolean showGui) {
-		this.showGui = showGui;
-	}
-
-	public void setMaxSteps(int maxSteps) {
-		this.maxSteps = maxSteps;
-	}
-
-	public void setShowMouse(boolean showMouse) {
-		this.showMouse = showMouse;
-	}
-
-	public void setRandomSeed(long randomSeed) {
-		this.randomSeed = randomSeed;
-	}
-
-	public void setSleepTime(int sleepTime) {
-		this.sleepTime = sleepTime;
-	}
-
-	public void setRemoveCaughtBoids(boolean removeCaughtBoids) {
-		this.removeCaughtBoids = removeCaughtBoids;
+	public void set(Parameter param, String value) {
+		switch (param) {
+		case MAX_STEPS:
+			setMaxSteps(Integer.parseInt(value));
+			break;
+		case AREA:
+			setArea(Float.parseFloat(value));
+			break;
+		case SLEEP_TIME:
+			setSleepTime(Integer.parseInt(value));
+			break;
+		case STORE_FORCES_ATTRIBUTES:
+			setStoreForcesAttributes(Boolean.parseBoolean(value));
+			break;
+		case REMOVE_CAUGHT_BOIDS:
+			setRemoveCaughtBoids(Boolean.parseBoolean(value));
+			break;
+		case NORMALIZE_MODE:
+			setNormalizeMode(Boolean.parseBoolean(value));
+			break;
+		case RANDOM_SEED:
+			setRandomSeed(Long.parseLong(value));
+			break;
+		}
 	}
 
 	/**
@@ -361,39 +414,66 @@ public class Context extends AdjacencyListGraph {
 	}
 
 	@Override
+	protected void addNodeCallback(AbstractNode node) {
+		Boid b = (Boid) node;
+		b.getSpecies().register(b);
+
+		super.addNodeCallback(node);
+	}
+
+	@Override
+	protected void removeNodeCallback(AbstractNode node) {
+		Boid b = (Boid) node;
+		b.getSpecies().unregister(b);
+
+		super.removeNodeCallback(node);
+	}
+
+	@Override
 	protected void attributeChanged(String sourceId, long timeId,
 			String attribute, AttributeChangeEvent event, Object oldValue,
 			Object newValue) {
 		String key = attribute;
 
-		if (key.startsWith("species.")) {
-			key = key.substring("species.".length());
-			String name;
+		if (key.startsWith("boids.")) {
+			key = key.substring("boids.".length());
 
-			if (key.indexOf('.') > 0) {
-				name = key.substring(0, key.indexOf('.'));
-				key = key.substring(name.length() + 1);
-			} else {
-				name = key;
-				key = null;
-			}
+			if (key.startsWith("species.")) {
+				key = key.substring("species.".length());
+				String name;
 
-			switch (event) {
-			case REMOVE:
-				if (boidSpecies.containsKey(name))
-					deleteSpecies(name);
+				if (key.indexOf('.') > 0) {
+					name = key.substring(0, key.indexOf('.'));
+					key = key.substring(name.length() + 1);
+				} else {
+					name = key;
+					key = null;
+				}
 
-				break;
-			case ADD:
-			case CHANGE:
-				BoidSpecies species = getOrCreateSpecies(name);
+				switch (event) {
+				case REMOVE:
+					if (boidSpecies.containsKey(name))
+						deleteSpecies(name);
 
-				if (key != null)
-					species.set(key,
-							newValue == null ? null : newValue.toString());
+					break;
+				case ADD:
+				case CHANGE:
+					BoidSpecies species;
 
-				break;
-			}
+					if (key == null && newValue != null
+							&& newValue instanceof String)
+						species = getOrCreateSpecies(name, (String) newValue);
+					else
+						species = getOrCreateSpecies(name);
+
+					if (key != null)
+						species.set(key, newValue == null ? null : newValue
+								.toString());
+
+					break;
+				}
+			} else
+				set(key, newValue == null ? null : newValue.toString());
 		}
 
 		super.attributeChanged(sourceId, timeId, attribute, event, oldValue,
@@ -402,7 +482,15 @@ public class Context extends AdjacencyListGraph {
 
 	private class BoidFactory implements NodeFactory<Boid> {
 		public Boid newInstance(String id, Graph graph) {
-			Boid b = new Boid(graph, id);
+			BoidSpecies species = null;
+
+			if (id.indexOf('.') != -1)
+				species = boidSpecies.get(id.substring(0, id.indexOf('.')));
+
+			if (species == null)
+				species = getDefaultSpecies();
+
+			Boid b = species.createBoid(id);
 			pbox.addParticle(b.getParticle());
 
 			return b;
@@ -411,24 +499,28 @@ public class Context extends AdjacencyListGraph {
 
 	public static void main(String... args) {
 		Context ctx = new Context();
-		BoidSpecies species = ctx.getDefaultSpecies();
-		species.angleOfView = 0;
-		
-		ctx.addAttribute("ui.quality");
-		ctx.addAttribute("ui.antialias");
-		ctx.addAttribute("ui.stylesheet", "node { size: 4px; } edge { fill-color: grey; }");
+		// BoidSpecies species = ctx.addDefaultSpecies();
+		// species.angleOfView = 0;
+		// species.setCount(100);
+
+		try {
+			ctx.loadDGSConfiguration(Context.class
+					.getResourceAsStream("configExample.dgs"));
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
+
 		Viewer viewer = ctx.display(false);
 
 		Camera cam = viewer.getDefaultView().getCamera();
-		
+
 		cam.setGraphViewport(-ctx.area, -ctx.area, ctx.area, ctx.area);
-		
-		for (int i = 0; i < species.count; i++)
-			ctx.addNode(String.format("boid%03d", i));
+
+		// species.setCount(100);
 
 		while (true) {
 			ctx.stepBegins(0);
-			
+
 			try {
 				Thread.sleep(50);
 			} catch (InterruptedException e) {

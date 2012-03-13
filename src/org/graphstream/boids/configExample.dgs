@@ -1,0 +1,36 @@
+DGS004
+null 0 0
+
+#
+# GraphStream attributes
+#
+
+cg ui.quality ui.antialias
+cg ui.stylesheet="node { size: 4px; } edge { fill-color: grey; }"
+
+#
+# gs-boids attributes
+# 
+
+cg boids.max_steps=8000
+cg boids.random_seed=2132134879
+cg boids.area=1
+cg boids.sleep_time=20
+
+#
+# Moustik species
+#
+
+cg boids.species.moustik=org.graphstream.boids.BoidSpecies
+cg boids.species.moustik.angle_of_view=0
+cg boids.species.moustik.view_zone=0.15
+cg boids.species.moustik.speed_factor=0.3
+cg boids.species.moustik.max_speed=1
+cg boids.species.moustik.min_speed=0.04
+cg boids.species.moustik.direction_factor=0.1
+cg boids.species.moustik.attraction_factor=0.5
+cg boids.species.moustik.repulsion_factor=0.001
+cg boids.species.moustik.inertia=1.1
+cg boids.species.moustik.trail=0
+cg boids.species.moustik.width=4
+cg boids.species.moustik.count=100

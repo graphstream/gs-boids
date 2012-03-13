@@ -2,6 +2,7 @@ package org.graphstream.boids;
 
 import java.awt.Color;
 import java.util.HashMap;
+import java.util.Iterator;
 
 import org.graphstream.boids.Context;
 
@@ -10,56 +11,38 @@ import org.graphstream.boids.Context;
  * 
  * @author Antoine Dutot
  */
-public class BoidSpecies extends HashMap<String, Boid> {
+public class BoidSpecies implements Iterable<Boid> {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 6005548670964581065L;
 
-	// Attributes
+	public static enum Parameter {
+		COUNT, ANGLE_OF_VIEW, VIEW_ZONE, SPEED_FACTOR, MAX_SPEED, MIN_SPEED, WIDTH, TRAIL, DIRECTION_FACTOR, ATTRACTION_FACTOR, REPULSION_FACTOR, INERTIA, FEAR_FACTOR
+	}
 
 	/**
 	 * Shared settings.
 	 */
 	protected Context ctx;
 
-	public static enum Parameter {
-		COUNT,
-		VIEW_ZONE,
-		SPEED_FACTOR,
-		MAX_SPEED,
-		MIN_SPEED,
-		WIDTH,
-		TRAIL,
-		DIRECTION_FACTOR,
-		ATTRACTION_FACTOR,
-		REPULSION_FACTOR,
-		INERTIA,
-		FEAR_FACTOR
-	}
-	
-	/**
-	 * Initial number of boids of this species.
-	 */
-	public int count = 200;
-
 	/**
 	 * The species name.
 	 */
-	public String name = randomName();
+	protected final String name;
 
 	/**
 	 * The distance at which a boid is seen.
 	 */
-	public double viewZone = 0.15f;
+	protected double viewZone = 0.15f;
 
 	/**
-	 * The boid angle of view, [-1..1]. This is the cosine of the angle between the boid
-	 * direction and the direction toward another boid. -1 Means 360 degrees, all is visible.
-	 * 0 means 180 degrees only boids in front are visible, 0.5 means 90 degrees,
-	 * 0.25 means 45 degrees.
+	 * The boid angle of view, [-1..1]. This is the cosine of the angle between
+	 * the boid direction and the direction toward another boid. -1 Means 360
+	 * degrees, all is visible. 0 means 180 degrees only boids in front are
+	 * visible, 0.5 means 90 degrees, 0.25 means 45 degrees.
 	 */
-	public double angleOfView = -1;
+	protected double angleOfView = -1;
 
 	/**
 	 * The boid speed at each step. This is the factor by which the speedFactor
@@ -67,17 +50,17 @@ public class BoidSpecies extends HashMap<String, Boid> {
 	 * accelerate the boid displacement, it also impacts the boid behaviour
 	 * (oscillation around the destination point, etc.)
 	 */
-	public double speedFactor = 0.3f;
+	protected double speedFactor = 0.3f;
 
 	/**
 	 * Maximum speed bound.
 	 */
-	public double maxSpeed = 1f;
+	protected double maxSpeed = 1f;
 
 	/**
 	 * Minimum speed bound.
 	 */
-	public double minSpeed = 0.04f;
+	protected double minSpeed = 0.04f;
 
 	/**
 	 * The importance of the other boids direction "overall" vector. The
@@ -85,7 +68,7 @@ public class BoidSpecies extends HashMap<String, Boid> {
 	 * divided by the number of boids seen. This factor is the importance of
 	 * this direction in the boid direction.
 	 */
-	public double directionFactor = 0.1f;
+	protected double directionFactor = 0.1f;
 
 	/**
 	 * How much other visible boids attract a boid. The barycenter of the
@@ -93,7 +76,7 @@ public class BoidSpecies extends HashMap<String, Boid> {
 	 * boid an this barycenter. This factor is the importance of this vector in
 	 * the boid direction.
 	 */
-	public double attractionFactor = 0.5f;
+	protected double attractionFactor = 0.5f;
 
 	/**
 	 * All the visible boids repulse the boid. The repulsion vector is the sum
@@ -101,69 +84,73 @@ public class BoidSpecies extends HashMap<String, Boid> {
 	 * boid, scaled by the number of visible boids. This factor is the
 	 * importance of this vector in the boid direction.
 	 */
-	public double repulsionFactor = 0.001f;
+	protected double repulsionFactor = 0.001f;
 
 	/**
 	 * The inertia is the importance of the boid previous direction in the boid
 	 * direction.
 	 */
-	public double inertia = 1.1f;
+	protected double inertia = 1.1f;
 
 	/**
 	 * Factor for repulsion on boids of other species. The fear that this
 	 * species produces on other species.
 	 */
-	public double fearFactor = 1;
+	protected double fearFactor = 1;
 
 	/**
 	 * The species main colour.
 	 */
-	public Color color = new Color(1, 0, 0);
+	protected Color color = new Color(1, 0, 0);
 
 	/**
 	 * The size of the trail in the GUI if any.
 	 */
-	public int trail = 0;
+	protected int trail = 0;
 
 	/**
 	 * The width of the particle in the GUI if any.
 	 */
-	public int width = 4;
-	
-	//protected DemographicManager demographicManager;
+	protected int width = 4;
 
-	// Constructors
+	protected HashMap<String, Boid> boids;
+
+	private int currentIndex = 0;
+	private long timestamp = System.nanoTime();
 
 	/**
 	 * New default species with a random colour.
 	 */
 	public BoidSpecies(Context ctx, String name) {
+		this.boids = new HashMap<String, Boid>();
 		this.ctx = ctx;
 		this.name = name;
 		this.color = new Color(ctx.random.nextFloat(), ctx.random.nextFloat(),
 				ctx.random.nextFloat());
 	}
 
-	// Access
+	public String getName() {
+		return name;
+	}
 
-	// Commands
-
-	private int currentIndex = 0;
-	private long timestamp = System.nanoTime();
+	public Iterator<Boid> iterator() {
+		return boids.values().iterator();
+	}
 
 	public void set(String p, String val) throws IllegalArgumentException {
 		Parameter param = Parameter.valueOf(p.toUpperCase());
 		set(param, val);
 	}
-	
+
 	public void set(Parameter p, String val) {
-		switch(p) {
+		System.out.printf("set %s of %s to %s\n", p.name(), name, val);
+
+		switch (p) {
 		case COUNT:
-			count = Integer.parseInt(val);
+			setCount(Integer.parseInt(val));
 			break;
 		case VIEW_ZONE:
 			viewZone = Double.parseDouble(val);
-			System.out.printf("%s view zone : %f\n", name, viewZone);
 			break;
 		case SPEED_FACTOR:
 			speedFactor = Double.parseDouble(val);
@@ -195,19 +182,30 @@ public class BoidSpecies extends HashMap<String, Boid> {
 		case FEAR_FACTOR:
 			fearFactor = Double.parseDouble(val);
 			break;
+		case ANGLE_OF_VIEW:
+			angleOfView = Double.parseDouble(val);
+			break;
 		}
 	}
-	
+
 	public String createNewId() {
-		return String.format("%s_%x_%x", name, timestamp, currentIndex++);
+		return String.format("%s.%x_%x", name, timestamp, currentIndex++);
 	}
 
-	public void register(Boid b) {
-		put(b.getId(), b);
+	public Boid createBoid() {
+		return createBoid(createNewId());
 	}
-	
-	public void unregister(Boid b) {
-		remove(b.getId());
+
+	public Boid createBoid(String id) {
+		return new Boid(ctx, this, id);
+	}
+
+	void register(Boid b) {
+		boids.put(b.getId(), b);
+	}
+
+	void unregister(Boid b) {
+		boids.remove(b.getId());
 	}
 
 	public void terminateLoop() {
@@ -215,32 +213,13 @@ public class BoidSpecies extends HashMap<String, Boid> {
 		// Can be used by extending classes.
 	}
 
-	protected static String randomName() {
-		return String.format("%c%c%c%c%c", (char) (64 + Math.random() * 26),
-				(char) (64 + Math.random() * 26),
-				(char) (64 + Math.random() * 26),
-				(char) (64 + Math.random() * 26),
-				(char) (64 + Math.random() * 26));
-	}
-
 	public int getPopulation() {
-		return size();
-	}
-
-	public int getCount() {
-		return count;
+		return boids.size();
 	}
 
 	public void setCount(int count) {
-		this.count = count;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
+		while (boids.size() < count)
+			ctx.addNode(createNewId());
 	}
 
 	public double getViewZone() {
