@@ -15,11 +15,11 @@ import org.miv.pherd.ntree.NTreeListener;
  * box.
  * 
  * XXX TODO there are bugs here, verify this code and reuse it in the boid
- * computation (actually the ntree is used only to go faster in searching
+ * computation (actually the n-tree is used only to go faster in searching
  * neighbors).
- * 
+ *
+ * @author Guilhelm Savin
  * @author Antoine Dutot
- * @since 2007
  */
 public class BoidCellData extends BarycenterCellData {
 	// Attributes

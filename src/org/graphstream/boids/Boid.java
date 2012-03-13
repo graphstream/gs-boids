@@ -44,9 +44,18 @@ import org.miv.pherd.geom.Vector3;
  * Represents a single bird-oid object.
  * 
  * <p>
- * A boid is both a particle in the force system used to compute the position and motion
+ * A boid is both a particle in the forces system used to compute the position and motion
  * of the object, and a GraphStream node. This allows to consider a graph made of
  * all the boids.
+ * </p>
+ * 
+ * <p>
+ * The boid is in fact split in two parts, the {@link Boid} class itself and the 
+ * {@link BoidParticle} inner class that represents the boid in the forces system. The
+ * boid particle in turn contains a {@link Forces} object that represents all the forces
+ * exercising on the boid. Globally, the {@link Boid} class acts on the graph and updates
+ * its position, creating links toward other boids/nodes that it sees, whereas the
+ * {@link BoidParticle} and the {@link Forces} are used to compute the boid position. 
  * </p>
  * 
  * @author Guilhelm Savin
@@ -188,17 +197,14 @@ public class Boid extends AdjacencyListNode {
 		/** Direction of the boid. */
 		protected Vector3 dir;
 		
-		/** Set of gloval parameters. */
+		/** Set of global parameters. */
 		protected Context ctx;
 
 		/** Number of boids in view at each step. */
 		protected int contacts = 0;
 		
-		/** Nimber of boids of my group in view at each step. */
+		/** Number of boids of my group in view at each step. */
 		protected int mySpeciesContacts = 0;
-
-		/** ?? */
-		protected float energy = 0;
 
 		/** 
 		 * New particle.
@@ -248,22 +254,17 @@ public class Boid extends AdjacencyListNode {
 			checkWalls();
 			nextPos.move(dir);
 
-//			setAttribute("xyz", pos.x, pos.y, pos.z);
-			Boid.this.setAttribute("x", pos.x);
-			Boid.this.setAttribute("y", pos.y);
-			Boid.this.setAttribute("z", pos.z);
+			Boid.this.setAttribute("xyz", pos.x, pos.y, pos.z);
 
 			moved = true;
 		}
 
 		@Override
 		public void inserted() {
-
 		}
 
 		@Override
 		public void removed() {
-
 		}
 
 		public Boid getBoid() {
