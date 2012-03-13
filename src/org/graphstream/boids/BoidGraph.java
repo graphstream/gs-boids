@@ -395,8 +395,13 @@ public class BoidGraph extends AdjacencyListGraph {
 		}
 	}
 
+	public void step() {
+		stepBegins(step + 1);
+	}
+
 	@Override
 	public void stepBegins(double step) {
+		super.stepBegins(step);
 		pbox.step();
 	}
 
