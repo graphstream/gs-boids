@@ -47,7 +47,7 @@ public class BoidSpecies implements Iterable<Boid> {
 	 * Kinds of parameters.
 	 */
 	public static enum Parameter {
-		COUNT, ANGLE_OF_VIEW, VIEW_ZONE, SPEED_FACTOR, MAX_SPEED, MIN_SPEED, WIDTH, TRAIL, DIRECTION_FACTOR, ATTRACTION_FACTOR, REPULSION_FACTOR, INERTIA, FEAR_FACTOR
+		COUNT, ANGLE_OF_VIEW, VIEW_ZONE, SPEED_FACTOR, MAX_SPEED, MIN_SPEED, WIDTH, DIRECTION_FACTOR, ATTRACTION_FACTOR, REPULSION_FACTOR, INERTIA, FEAR_FACTOR
 	}
 
 	/**
@@ -131,11 +131,6 @@ public class BoidSpecies implements Iterable<Boid> {
 	 * The species main color.
 	 */
 	protected Color color = new Color(1, 0, 0);
-
-	// /**
-	// * The size of the trail in the GUI if any.
-	// */
-	protected int trail = 0;
 
 	/**
 	 * The width of the particle in the GUI if any.
