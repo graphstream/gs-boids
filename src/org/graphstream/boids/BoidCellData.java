@@ -22,18 +22,13 @@ import org.miv.pherd.ntree.NTreeListener;
  * @author Antoine Dutot
  */
 public class BoidCellData extends BarycenterCellData {
-	// Attributes
-
+	/** Direction. */
 	public Vector3 dir;
-
-	// Constructors
 
 	public BoidCellData() {
 		super();
 		dir = new Vector3(0, 0, 0);
 	}
-
-	// Access
 
 	public Vector3 getDirection() {
 		return dir;
@@ -43,8 +38,6 @@ public class BoidCellData extends BarycenterCellData {
 	public CellData newCellData() {
 		return new BoidCellData();
 	}
-
-	// Commands
 
 	@Override
 	public void recompute() {
