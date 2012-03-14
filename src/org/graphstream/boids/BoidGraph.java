@@ -264,6 +264,10 @@ public class BoidGraph extends AdjacencyListGraph {
 		return pbox.getNTree().getMaxParticlePerCell();
 	}
 
+	public int getMaxSteps() {
+		return maxSteps;
+	}
+	
 	public void setMaxSteps(int maxSteps) {
 		this.maxSteps = maxSteps;
 	}
