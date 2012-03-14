@@ -29,6 +29,7 @@
 package org.graphstream.boids;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
@@ -157,16 +158,28 @@ public class BoidGraph extends AdjacencyListGraph {
 	}
 
 	/**
-	 * Load configuration from a dgs file. See 'configExample.dgs' for an
-	 * example of dgs configuration.
+	 * Load configuration from a dgs file or resource. See 'configExample.dgs'
+	 * for an example of dgs configuration. The loader try to open the file
+	 * first. If file is not found, loader try to get the resource using
+	 * {@link java.lang.ClassLoader#getResourceAsStream(String)}.
 	 * 
 	 * @param dgs
-	 *            path to the DGS file containing the configuration.
+	 *            path to the DGS file or resource containing the configuration.
 	 * @throws IOException
 	 *             if something wrong happens with io.
 	 */
 	public void loadDGSConfiguration(String dgs) throws IOException {
-		FileInputStream in = new FileInputStream(dgs);
+		InputStream in;
+
+		try {
+			in = new FileInputStream(dgs);
+		} catch (FileNotFoundException e) {
+			in = getClass().getResourceAsStream(dgs);
+
+			if (in == null)
+				throw e;
+		}
+
 		loadDGSConfiguration(in);
 		in.close();
 	}
