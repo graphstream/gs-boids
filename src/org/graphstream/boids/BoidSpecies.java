@@ -41,8 +41,6 @@ import org.graphstream.boids.BoidGraph;
  * @author Antoine Dutot
  */
 public class BoidSpecies implements Iterable<Boid> {
-	private static final long serialVersionUID = 6005548670964581065L;
-
 	/**
 	 * Kinds of parameters.
 	 */
@@ -132,6 +130,9 @@ public class BoidSpecies implements Iterable<Boid> {
 	 */
 	protected Color color = new Color(1, 0, 0);
 
+	/**
+	 * Collection of boids for this species.
+	 */
 	protected HashMap<String, Boid> boids;
 
 	private int currentIndex = 0;
@@ -139,6 +140,11 @@ public class BoidSpecies implements Iterable<Boid> {
 
 	/**
 	 * New default species with a random color.
+	 * 
+	 * @param ctx
+	 *            context in which this species is evolving
+	 * @param name
+	 *            final name of this species
 	 */
 	public BoidSpecies(BoidGraph ctx, String name) {
 		this.boids = new HashMap<String, Boid>();
@@ -163,19 +169,42 @@ public class BoidSpecies implements Iterable<Boid> {
 				ctx.random.nextFloat());
 	}
 
+	/**
+	 * Getter for the name of the species.
+	 * 
+	 * @return name of this species
+	 */
 	public String getName() {
 		return name;
 	}
 
-	public Iterator<Boid> iterator() {
-		return boids.values().iterator();
-	}
-
+	/**
+	 * Same than {@link #set(Parameter, String)} but the enum constant is given
+	 * as a string.
+	 * 
+	 * @param p
+	 *            name of the enum constant associated with a parameter. Note
+	 *            that this name is case-independent since it is converted to
+	 *            upper case in the method
+	 * @param val
+	 *            string value of the parameter
+	 * @throws IllegalArgumentException
+	 *             if the enum constant does not exist
+	 */
 	public void set(String p, String val) throws IllegalArgumentException {
 		Parameter param = Parameter.valueOf(p.toUpperCase());
 		set(param, val);
 	}
 
+	/**
+	 * Utility function to set parameter from an enum constant and a string
+	 * value.
+	 * 
+	 * @param p
+	 *            an enum constant associated with a parameter
+	 * @param val
+	 *            string value of the parameter
+	 */
 	public void set(Parameter p, String val) {
 		System.out.printf("set %s of %s to %s\n", p.name(), name, val);
 
@@ -216,14 +245,33 @@ public class BoidSpecies implements Iterable<Boid> {
 		}
 	}
 
+	/**
+	 * Create a new unique id specific to this species. It can be used to create
+	 * a new boid.
+	 * 
+	 * @return a new unique id
+	 */
 	public String createNewId() {
 		return String.format("%s.%x_%x", name, timestamp, currentIndex++);
 	}
 
+	/**
+	 * Create a new boid with an automatic id created using
+	 * {@link #createNewId()}.
+	 * 
+	 * @return a new boid
+	 */
 	public Boid createBoid() {
 		return createBoid(createNewId());
 	}
 
+	/**
+	 * Create a new boid.
+	 * 
+	 * @param id
+	 *            id of the new boid
+	 * @return the new boid
+	 */
 	public Boid createBoid(String id) {
 		return new Boid(ctx, this, id);
 	}
@@ -236,17 +284,30 @@ public class BoidSpecies implements Iterable<Boid> {
 		boids.remove(b.getId());
 	}
 
+	/**
+	 * This method is called by {@link org.graphstream.boids.BoidGraph} at the
+	 * end of each step. It can be used by sub-classes to add some code.
+	 */
 	public void terminateLoop() {
 		// Do nothing.
 		// Can be used by extending classes.
 	}
 
+	/**
+	 * Count of boids of this species.
+	 * 
+	 * @return boids count
+	 */
 	public int getPopulation() {
 		return boids.size();
 	}
 
 	/**
-	 * Change the initial number of boids of this species.
+	 * Create boids until population is at least count. If population is already
+	 * greater than count, nothing happens.
+	 * 
+	 * @param count
+	 *            the minimum boid count for this species
 	 */
 	public void setCount(int count) {
 		while (boids.size() < count)
@@ -255,6 +316,8 @@ public class BoidSpecies implements Iterable<Boid> {
 
 	/**
 	 * The distance at which a boid is seen.
+	 * 
+	 * @return
 	 */
 	public double getViewZone() {
 		return viewZone;
@@ -262,6 +325,8 @@ public class BoidSpecies implements Iterable<Boid> {
 
 	/**
 	 * Change the distance at which a boid is seen.
+	 * 
+	 * @param viewZone
 	 */
 	public void setViewZone(double viewZone) {
 		this.viewZone = viewZone;
@@ -272,6 +337,8 @@ public class BoidSpecies implements Iterable<Boid> {
 	 * vector is scaled to move the boid at each step. This therefore not only
 	 * accelerate the boid displacement, it also impacts the boid behavior
 	 * (oscillation around the destination point, etc.)
+	 * 
+	 * @return
 	 */
 	public double getSpeedFactor() {
 		return speedFactor;
@@ -279,6 +346,8 @@ public class BoidSpecies implements Iterable<Boid> {
 
 	/**
 	 * Change the boid speed at each step.
+	 * 
+	 * @param speedFactor
 	 */
 	public void setSpeedFactor(double speedFactor) {
 		this.speedFactor = speedFactor;
@@ -286,6 +355,8 @@ public class BoidSpecies implements Iterable<Boid> {
 
 	/**
 	 * Maximum speed bound.
+	 * 
+	 * @return
 	 */
 	public double getMaxSpeed() {
 		return maxSpeed;
@@ -293,6 +364,8 @@ public class BoidSpecies implements Iterable<Boid> {
 
 	/**
 	 * Change the maximum speed bound.
+	 * 
+	 * @param maxSpeed
 	 */
 	public void setMaxSpeed(double maxSpeed) {
 		this.maxSpeed = maxSpeed;
@@ -300,6 +373,8 @@ public class BoidSpecies implements Iterable<Boid> {
 
 	/**
 	 * Minimum speed bound.
+	 * 
+	 * @return
 	 */
 	public double getMinSpeed() {
 		return minSpeed;
@@ -307,6 +382,8 @@ public class BoidSpecies implements Iterable<Boid> {
 
 	/**
 	 * Change the minimum speed bound.
+	 * 
+	 * @param minSpeed
 	 */
 	public void setMinSpeed(double minSpeed) {
 		this.minSpeed = minSpeed;
@@ -317,6 +394,8 @@ public class BoidSpecies implements Iterable<Boid> {
 	 * direction vector is the sum of all the visible boids direction vector
 	 * divided by the number of boids seen. This factor is the importance of
 	 * this direction in the boid direction.
+	 * 
+	 * @return
 	 */
 	public double getDirectionFactor() {
 		return directionFactor;
@@ -324,6 +403,8 @@ public class BoidSpecies implements Iterable<Boid> {
 
 	/**
 	 * Change the importance of the other boids direction "overall" vector.
+	 * 
+	 * @param directionFactor
 	 */
 	public void setDirectionFactor(double directionFactor) {
 		this.directionFactor = directionFactor;
@@ -334,6 +415,8 @@ public class BoidSpecies implements Iterable<Boid> {
 	 * visible boids attract a boid. The attraction is the vector between the
 	 * boid an this barycenter. This factor is the importance of this vector in
 	 * the boid direction.
+	 * 
+	 * @return
 	 */
 	public double getAttractionFactor() {
 		return attractionFactor;
@@ -341,6 +424,8 @@ public class BoidSpecies implements Iterable<Boid> {
 
 	/**
 	 * Change how much other visible boids attract a boid.
+	 * 
+	 * @param attractionFactor
 	 */
 	public void setAttractionFactor(double attractionFactor) {
 		this.attractionFactor = attractionFactor;
@@ -351,6 +436,8 @@ public class BoidSpecies implements Iterable<Boid> {
 	 * of all the vectors between all other visible boids and the considered
 	 * boid, scaled by the number of visible boids. This factor is the
 	 * importance of this vector in the boid direction.
+	 * 
+	 * @return
 	 */
 	public double getRepulsionFactor() {
 		return repulsionFactor;
@@ -358,6 +445,8 @@ public class BoidSpecies implements Iterable<Boid> {
 
 	/**
 	 * Change how all the visible boids repulse the boid.
+	 * 
+	 * @param repulsionFactor
 	 */
 	public void setRepulsionFactor(double repulsionFactor) {
 		this.repulsionFactor = repulsionFactor;
@@ -366,6 +455,8 @@ public class BoidSpecies implements Iterable<Boid> {
 	/**
 	 * The inertia is the importance of the boid previous direction in the boid
 	 * direction.
+	 * 
+	 * @return
 	 */
 	public double getInertia() {
 		return inertia;
@@ -374,6 +465,8 @@ public class BoidSpecies implements Iterable<Boid> {
 	/**
 	 * Change the inertia is the importance of the boid previous direction in
 	 * the boid direction.
+	 * 
+	 * @param inertia
 	 */
 	public void setInertia(double inertia) {
 		this.inertia = inertia;
@@ -382,6 +475,8 @@ public class BoidSpecies implements Iterable<Boid> {
 	/**
 	 * Factor for repulsion on boids of other species. The fear that this
 	 * species produces on other species.
+	 * 
+	 * @return
 	 */
 	public double getFearFactor() {
 		return fearFactor;
@@ -389,6 +484,8 @@ public class BoidSpecies implements Iterable<Boid> {
 
 	/**
 	 * Change the factor for repulsion on boids of other species.
+	 * 
+	 * @param fearFactor
 	 */
 	public void setFearFactor(double fearFactor) {
 		this.fearFactor = fearFactor;
@@ -396,6 +493,8 @@ public class BoidSpecies implements Iterable<Boid> {
 
 	/**
 	 * The species main color.
+	 * 
+	 * @return
 	 */
 	public Color getColor() {
 		return color;
@@ -403,9 +502,23 @@ public class BoidSpecies implements Iterable<Boid> {
 
 	/**
 	 * Change the species main color.
+	 * 
+	 * @param color
 	 */
 	public void setColor(Color color) {
 		this.color = color;
+	}
+
+	/**
+	 * The boid angle of view, [-1..1]. This is the cosine of the angle between
+	 * the boid direction and the direction toward another boid. -1 Means 360
+	 * degrees, all is visible. 0 means 180 degrees only boids in front are
+	 * visible, 0.5 means 90 degrees, 0.25 means 45 degrees.
+	 * 
+	 * @return angle of view for boid of this species
+	 */
+	public double getAngleOfView() {
+		return angleOfView;
 	}
 
 	/**
@@ -418,13 +531,12 @@ public class BoidSpecies implements Iterable<Boid> {
 		angleOfView = aov;
 	}
 
-	/**
-	 * The boid angle of view, [-1..1]. This is the cosine of the angle between
-	 * the boid direction and the direction toward another boid. -1 Means 360
-	 * degrees, all is visible. 0 means 180 degrees only boids in front are
-	 * visible, 0.5 means 90 degrees, 0.25 means 45 degrees.
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Iterable#iterator()
 	 */
-	public double getAngleOfView() {
-		return angleOfView;
+	public Iterator<Boid> iterator() {
+		return boids.values().iterator();
 	}
 }
