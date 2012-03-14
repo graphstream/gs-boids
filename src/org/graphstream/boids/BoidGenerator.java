@@ -29,9 +29,8 @@
 package org.graphstream.boids;
 
 import org.graphstream.algorithm.generator.Generator;
-import org.graphstream.stream.AttributeSink;
-import org.graphstream.stream.ElementSink;
 import org.graphstream.stream.Sink;
+import org.graphstream.stream.SourceBase;
 
 /**
  * A generator using a boid graph to create a dynamic graph.
@@ -40,7 +39,7 @@ import org.graphstream.stream.Sink;
  * @author Antoine Dutot
  * 
  */
-public class BoidGenerator implements Generator {
+public class BoidGenerator extends SourceBase implements Generator {
 	/**
 	 * Boid graph used by generator.
 	 */
@@ -51,6 +50,8 @@ public class BoidGenerator implements Generator {
 	 * species is created with one hundred of boids.
 	 */
 	protected String configuration;
+
+	private Link proxy;
 
 	/**
 	 * Create a new boid generator with no configuration.
@@ -69,6 +70,7 @@ public class BoidGenerator implements Generator {
 	public BoidGenerator(String dgsConfiguration) {
 		this.configuration = dgsConfiguration;
 		this.ctx = null;
+		this.proxy = new Link();
 	}
 
 	/**
@@ -91,6 +93,7 @@ public class BoidGenerator implements Generator {
 			throw new RuntimeException("generation already started");
 
 		ctx = new BoidGraph();
+		ctx.addSink(proxy);
 
 		if (configuration != null) {
 			try {
@@ -109,7 +112,7 @@ public class BoidGenerator implements Generator {
 	 * @see org.graphstream.algorithm.generator.Generator#end()
 	 */
 	public void end() {
-		clearSinks();
+		ctx.clearSinks();
 
 		ctx.pbox.removeAllParticles();
 		ctx = null;
@@ -125,92 +128,184 @@ public class BoidGenerator implements Generator {
 		return true;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.graphstream.stream.Source#addAttributeSink(org.graphstream.stream
-	 * .AttributeSink)
-	 */
-	public void addAttributeSink(AttributeSink sink) {
-		ctx.addAttributeSink(sink);
-	}
+	private class Link implements Sink {
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see
+		 * org.graphstream.stream.AttributeSink#edgeAttributeAdded(java.lang
+		 * .String, long, java.lang.String, java.lang.String, java.lang.Object)
+		 */
+		public void edgeAttributeAdded(String sourceId, long timeId,
+				String edgeId, String attribute, Object value) {
+			sendEdgeAttributeAdded(sourceId, timeId, edgeId, attribute, value);
+		}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @seeorg.graphstream.stream.Source#addElementSink(org.graphstream.stream.
-	 * ElementSink)
-	 */
-	public void addElementSink(ElementSink sink) {
-		ctx.addElementSink(sink);
-	}
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see
+		 * org.graphstream.stream.AttributeSink#edgeAttributeChanged(java.lang
+		 * .String, long, java.lang.String, java.lang.String, java.lang.Object,
+		 * java.lang.Object)
+		 */
+		public void edgeAttributeChanged(String sourceId, long timeId,
+				String edgeId, String attribute, Object oldValue,
+				Object newValue) {
+			sendEdgeAttributeChanged(sourceId, timeId, edgeId, attribute,
+					oldValue, newValue);
+		}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.graphstream.stream.Source#addSink(org.graphstream.stream.Sink)
-	 */
-	public void addSink(Sink sink) {
-		ctx.addSink(sink);
-	}
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see
+		 * org.graphstream.stream.AttributeSink#edgeAttributeRemoved(java.lang
+		 * .String, long, java.lang.String, java.lang.String)
+		 */
+		public void edgeAttributeRemoved(String sourceId, long timeId,
+				String edgeId, String attribute) {
+			sendEdgeAttributeRemoved(sourceId, timeId, edgeId, attribute);
+		}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.graphstream.stream.Source#clearAttributeSinks()
-	 */
-	public void clearAttributeSinks() {
-		ctx.clearAttributeSinks();
-	}
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see
+		 * org.graphstream.stream.AttributeSink#graphAttributeAdded(java.lang
+		 * .String, long, java.lang.String, java.lang.Object)
+		 */
+		public void graphAttributeAdded(String sourceId, long timeId,
+				String attribute, Object value) {
+			sendGraphAttributeAdded(sourceId, timeId, attribute, value);
+		}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.graphstream.stream.Source#clearElementSinks()
-	 */
-	public void clearElementSinks() {
-		ctx.clearElementSinks();
-	}
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see
+		 * org.graphstream.stream.AttributeSink#graphAttributeChanged(java.lang
+		 * .String, long, java.lang.String, java.lang.Object, java.lang.Object)
+		 */
+		public void graphAttributeChanged(String sourceId, long timeId,
+				String attribute, Object oldValue, Object newValue) {
+			sendGraphAttributeChanged(sourceId, timeId, attribute, oldValue,
+					newValue);
+		}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.graphstream.stream.Source#clearSinks()
-	 */
-	public void clearSinks() {
-		ctx.clearSinks();
-	}
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see
+		 * org.graphstream.stream.AttributeSink#graphAttributeRemoved(java.lang
+		 * .String, long, java.lang.String)
+		 */
+		public void graphAttributeRemoved(String sourceId, long timeId,
+				String attribute) {
+			sendGraphAttributeRemoved(sourceId, timeId, attribute);
+		}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.graphstream.stream.Source#removeAttributeSink(org.graphstream.stream
-	 * .AttributeSink)
-	 */
-	public void removeAttributeSink(AttributeSink sink) {
-		ctx.removeAttributeSink(sink);
-	}
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see
+		 * org.graphstream.stream.AttributeSink#nodeAttributeAdded(java.lang
+		 * .String, long, java.lang.String, java.lang.String, java.lang.Object)
+		 */
+		public void nodeAttributeAdded(String sourceId, long timeId,
+				String nodeId, String attribute, Object value) {
+			sendNodeAttributeAdded(sourceId, timeId, nodeId, attribute, value);
+		}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.graphstream.stream.Source#removeElementSink(org.graphstream.stream
-	 * .ElementSink)
-	 */
-	public void removeElementSink(ElementSink sink) {
-		ctx.removeElementSink(sink);
-	}
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see
+		 * org.graphstream.stream.AttributeSink#nodeAttributeChanged(java.lang
+		 * .String, long, java.lang.String, java.lang.String, java.lang.Object,
+		 * java.lang.Object)
+		 */
+		public void nodeAttributeChanged(String sourceId, long timeId,
+				String nodeId, String attribute, Object oldValue,
+				Object newValue) {
+			sendNodeAttributeChanged(sourceId, timeId, nodeId, attribute,
+					oldValue, newValue);
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.graphstream.stream.Source#removeSink(org.graphstream.stream.Sink)
-	 */
-	public void removeSink(Sink sink) {
-		ctx.removeSink(sink);
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see
+		 * org.graphstream.stream.AttributeSink#nodeAttributeRemoved(java.lang
+		 * .String, long, java.lang.String, java.lang.String)
+		 */
+		public void nodeAttributeRemoved(String sourceId, long timeId,
+				String nodeId, String attribute) {
+			sendNodeAttributeRemoved(sourceId, timeId, nodeId, attribute);
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.stream.ElementSink#edgeAdded(java.lang.String,
+		 * long, java.lang.String, java.lang.String, java.lang.String, boolean)
+		 */
+		public void edgeAdded(String sourceId, long timeId, String edgeId,
+				String fromNodeId, String toNodeId, boolean directed) {
+			sendEdgeAdded(sourceId, timeId, edgeId, fromNodeId, toNodeId,
+					directed);
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.stream.ElementSink#edgeRemoved(java.lang.String,
+		 * long, java.lang.String)
+		 */
+		public void edgeRemoved(String sourceId, long timeId, String edgeId) {
+			sendEdgeRemoved(sourceId, timeId, edgeId);
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see
+		 * org.graphstream.stream.ElementSink#graphCleared(java.lang.String,
+		 * long)
+		 */
+		public void graphCleared(String sourceId, long timeId) {
+			sendGraphCleared(sourceId, timeId);
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.stream.ElementSink#nodeAdded(java.lang.String,
+		 * long, java.lang.String)
+		 */
+		public void nodeAdded(String sourceId, long timeId, String nodeId) {
+			sendNodeAdded(sourceId, timeId, nodeId);
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.stream.ElementSink#nodeRemoved(java.lang.String,
+		 * long, java.lang.String)
+		 */
+		public void nodeRemoved(String sourceId, long timeId, String nodeId) {
+			sendNodeRemoved(sourceId, timeId, nodeId);
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.stream.ElementSink#stepBegins(java.lang.String,
+		 * long, double)
+		 */
+		public void stepBegins(String sourceId, long timeId, double step) {
+			sendStepBegins(sourceId, timeId, step);
+		}
 	}
 }
