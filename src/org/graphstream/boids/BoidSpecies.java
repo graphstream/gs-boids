@@ -47,7 +47,7 @@ public class BoidSpecies implements Iterable<Boid> {
 	 * Kinds of parameters.
 	 */
 	public static enum Parameter {
-		COUNT, ANGLE_OF_VIEW, VIEW_ZONE, SPEED_FACTOR, MAX_SPEED, MIN_SPEED, WIDTH, DIRECTION_FACTOR, ATTRACTION_FACTOR, REPULSION_FACTOR, INERTIA, FEAR_FACTOR
+		COUNT, ANGLE_OF_VIEW, VIEW_ZONE, SPEED_FACTOR, MAX_SPEED, MIN_SPEED, DIRECTION_FACTOR, ATTRACTION_FACTOR, REPULSION_FACTOR, INERTIA, FEAR_FACTOR
 	}
 
 	/**
@@ -63,7 +63,7 @@ public class BoidSpecies implements Iterable<Boid> {
 	/**
 	 * The distance at which a boid is seen.
 	 */
-	protected double viewZone = 0.15f;
+	protected double viewZone;
 
 	/**
 	 * The boid angle of view, [-1..1]. This is the cosine of the angle between
@@ -71,7 +71,7 @@ public class BoidSpecies implements Iterable<Boid> {
 	 * degrees, all is visible. 0 means 180 degrees only boids in front are
 	 * visible, 0.5 means 90 degrees, 0.25 means 45 degrees.
 	 */
-	protected double angleOfView = -1;
+	protected double angleOfView;
 
 	/**
 	 * The boid speed at each step. This is the factor by which the speedFactor
@@ -79,17 +79,17 @@ public class BoidSpecies implements Iterable<Boid> {
 	 * accelerate the boid displacement, it also impacts the boid behavior
 	 * (oscillation around the destination point, etc.)
 	 */
-	protected double speedFactor = 0.3f;
+	protected double speedFactor;
 
 	/**
 	 * Maximum speed bound.
 	 */
-	protected double maxSpeed = 1f;
+	protected double maxSpeed;
 
 	/**
 	 * Minimum speed bound.
 	 */
-	protected double minSpeed = 0.04f;
+	protected double minSpeed;
 
 	/**
 	 * The importance of the other boids direction "overall" vector. The
@@ -97,7 +97,7 @@ public class BoidSpecies implements Iterable<Boid> {
 	 * divided by the number of boids seen. This factor is the importance of
 	 * this direction in the boid direction.
 	 */
-	protected double directionFactor = 0.1f;
+	protected double directionFactor;
 
 	/**
 	 * How much other visible boids attract a boid. The barycenter of the
@@ -105,7 +105,7 @@ public class BoidSpecies implements Iterable<Boid> {
 	 * boid an this barycenter. This factor is the importance of this vector in
 	 * the boid direction.
 	 */
-	protected double attractionFactor = 0.5f;
+	protected double attractionFactor;
 
 	/**
 	 * All the visible boids repulse the boid. The repulsion vector is the sum
@@ -113,31 +113,27 @@ public class BoidSpecies implements Iterable<Boid> {
 	 * boid, scaled by the number of visible boids. This factor is the
 	 * importance of this vector in the boid direction.
 	 */
-	protected double repulsionFactor = 0.001f;
+	protected double repulsionFactor;
 
 	/**
 	 * The inertia is the importance of the boid previous direction in the boid
 	 * direction.
 	 */
-	protected double inertia = 1.1f;
+	protected double inertia;
 
 	/**
 	 * Factor for repulsion on boids of other species. The fear that this
 	 * species produces on other species.
 	 */
-	protected double fearFactor = 1;
+	protected double fearFactor;
 
 	/**
 	 * The species main color.
 	 */
 	protected Color color = new Color(1, 0, 0);
 
-	/**
-	 * The width of the particle in the GUI if any.
-	 */
-	protected int width = 4;
-
 	protected HashMap<String, Boid> boids;
+
 	private int currentIndex = 0;
 	private long timestamp = System.nanoTime();
 
@@ -148,6 +144,21 @@ public class BoidSpecies implements Iterable<Boid> {
 		this.boids = new HashMap<String, Boid>();
 		this.ctx = ctx;
 		this.name = name;
+
+		//
+		// Default parameters
+		//
+		angleOfView = 0;
+		viewZone = 0.15f;
+		speedFactor = 0.3f;
+		maxSpeed = 1f;
+		minSpeed = 0.04f;
+		directionFactor = 0.1f;
+		attractionFactor = 0.5f;
+		repulsionFactor = 0.001f;
+		inertia = 1.1f;
+		fearFactor = 1;
+
 		this.color = new Color(ctx.random.nextFloat(), ctx.random.nextFloat(),
 				ctx.random.nextFloat());
 	}
@@ -184,12 +195,6 @@ public class BoidSpecies implements Iterable<Boid> {
 		case MIN_SPEED:
 			minSpeed = Double.parseDouble(val);
 			break;
-		case WIDTH:
-			width = Integer.parseInt(val);
-			break;
-		// case TRAIL:
-		// trail = Integer.parseInt(val);
-		// break;
 		case DIRECTION_FACTOR:
 			directionFactor = Double.parseDouble(val);
 			break;
@@ -403,14 +408,23 @@ public class BoidSpecies implements Iterable<Boid> {
 		this.color = color;
 	}
 
-	// public void setTrail(int trail) {
-	// this.trail = trail;
-	// }
+	/**
+	 * Set the angle of view for boids of this species.
+	 * 
+	 * @param aov
+	 *            new angle of view
+	 */
+	public void setAngleOfView(double aov) {
+		angleOfView = aov;
+	}
 
 	/**
-	 * Change the width of the particle in the GUI if any.
+	 * The boid angle of view, [-1..1]. This is the cosine of the angle between
+	 * the boid direction and the direction toward another boid. -1 Means 360
+	 * degrees, all is visible. 0 means 180 degrees only boids in front are
+	 * visible, 0.5 means 90 degrees, 0.25 means 45 degrees.
 	 */
-	public void setWidth(int width) {
-		this.width = width;
+	public double getAngleOfView() {
+		return angleOfView;
 	}
 }
