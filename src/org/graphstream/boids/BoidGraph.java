@@ -398,15 +398,15 @@ public class BoidGraph extends AdjacencyListGraph {
 		loop = true;
 
 		while (loop) {
-			pbox.step();
-
+			stepBegins(step);
+			
 			for (BoidSpecies sp : boidSpecies.values())
 				sp.terminateLoop();
-
+			
 			sleep(sleepTime);
-
+			
 			step++;
-
+			
 			if (maxSteps > 0 && step > maxSteps)
 				loop = false;
 		}
