@@ -45,7 +45,7 @@ public class BoidSpecies implements Iterable<Boid> {
 	 * Kinds of parameters.
 	 */
 	public static enum Parameter {
-		COUNT, ANGLE_OF_VIEW, VIEW_ZONE, SPEED_FACTOR, MAX_SPEED, MIN_SPEED, DIRECTION_FACTOR, ATTRACTION_FACTOR, REPULSION_FACTOR, INERTIA, FEAR_FACTOR
+		COUNT, ANGLE_OF_VIEW, VIEW_ZONE, SPEED_FACTOR, MAX_SPEED, MIN_SPEED, DIRECTION_FACTOR, ATTRACTION_FACTOR, REPULSION_FACTOR, INERTIA, FEAR_FACTOR, ADD_SPECIES_NAME_IN_UI_CLASS
 	}
 
 	/**
@@ -135,6 +135,8 @@ public class BoidSpecies implements Iterable<Boid> {
 	 */
 	protected HashMap<String, Boid> boids;
 
+	protected boolean addSpeciesNameInUIClass;
+
 	private int currentIndex = 0;
 	private long timestamp = System.nanoTime();
 
@@ -164,6 +166,7 @@ public class BoidSpecies implements Iterable<Boid> {
 		repulsionFactor = 0.001f;
 		inertia = 1.1f;
 		fearFactor = 1;
+		addSpeciesNameInUIClass = true;
 
 		this.color = new Color(ctx.random.nextFloat(), ctx.random.nextFloat(),
 				ctx.random.nextFloat());
@@ -242,6 +245,9 @@ public class BoidSpecies implements Iterable<Boid> {
 		case ANGLE_OF_VIEW:
 			angleOfView = Double.parseDouble(val);
 			break;
+		case ADD_SPECIES_NAME_IN_UI_CLASS:
+			addSpeciesNameInUIClass = Boolean.parseBoolean(val);
+			break;
 		}
 	}
 
@@ -278,10 +284,32 @@ public class BoidSpecies implements Iterable<Boid> {
 
 	void register(Boid b) {
 		boids.put(b.getId(), b);
+
+		if (addSpeciesNameInUIClass) {
+			String uiClass = b.getAttribute("ui.class");
+
+			if (uiClass == null)
+				uiClass = name;
+			else
+				uiClass = uiClass + " " + name;
+
+			b.setAttribute("ui.class", uiClass);
+		}
 	}
 
 	void unregister(Boid b) {
 		boids.remove(b.getId());
+
+		if (addSpeciesNameInUIClass) {
+			String uiClass = b.getAttribute("ui.class");
+
+			if (uiClass != null && uiClass.indexOf(name) != -1) {
+				uiClass = uiClass.replaceAll("(^|\\s)" + name + "($|\\s)", " ");
+				uiClass = uiClass.trim();
+
+				b.setAttribute("ui.class", uiClass);
+			}
+		}
 	}
 
 	/**

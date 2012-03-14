@@ -478,9 +478,16 @@ public class BoidGraph extends AdjacencyListGraph {
 					else
 						species = getOrCreateSpecies(name);
 
-					if (key != null)
-						species.set(key, newValue == null ? null : newValue
-								.toString());
+					if (key != null) {
+						try {
+							species.set(key, newValue == null ? null : newValue
+									.toString());
+						} catch (IllegalArgumentException e) {
+							System.err.printf("(WW) invalid parameter '%s'\n",
+									key);
+							System.err.printf("     ignoring it.\n");
+						}
+					}
 
 					break;
 				}
