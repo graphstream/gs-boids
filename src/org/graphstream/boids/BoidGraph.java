@@ -70,7 +70,7 @@ public class BoidGraph extends AdjacencyListGraph {
 	 * The radius of the explored area. The real area range is [-area..area] in
 	 * all three dimensions.
 	 */
-	protected float area;
+	protected double area;
 
 	/**
 	 * Number of milliseconds to sleep between each particle computation step.
@@ -193,11 +193,11 @@ public class BoidGraph extends AdjacencyListGraph {
 		return space;
 	}
 
-	public float getArea() {
+	public double getArea() {
 		return area;
 	}
 
-	public void setArea(float area) {
+	public void setArea(double area) {
 		this.area = area;
 
 		Anchor lo = new Anchor(-area, -area, -area);
