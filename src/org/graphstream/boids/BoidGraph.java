@@ -35,7 +35,6 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 
-import org.graphstream.boids.forces.greedy.GreedyForcesFactory;
 import org.graphstream.boids.forces.ntree.NTreeForcesFactory;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.NodeFactory;
@@ -144,8 +143,7 @@ public class BoidGraph extends AdjacencyListGraph {
 		area = 1;
 		maxSteps = 0;
 		boidSpecies = new HashMap<String, BoidSpecies>();
-		forcesFactory = new GreedyForcesFactory(this);
-		//forcesFactory = new NTreeForcesFactory(this);
+		forcesFactory = new NTreeForcesFactory(this);
 	}
 
 	public BoidGraph(String dgsConfig) throws IOException {
@@ -196,7 +194,12 @@ public class BoidGraph extends AdjacencyListGraph {
 		config.removeSink(this);
 	}
 
-	// Access
+	public void setForcesFactory(BoidForcesFactory bff) {
+		if (forcesFactory != null)
+			forcesFactory.end();
+		
+		forcesFactory = bff;
+	}
 
 	public double getArea() {
 		return area;

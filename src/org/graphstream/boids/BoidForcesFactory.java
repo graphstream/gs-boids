@@ -60,4 +60,9 @@ public interface BoidForcesFactory {
 	 * @param maxz
 	 */
 	void resize(Point3 low, Point3 high);
+	
+	/**
+	 * Terminate all operations.
+	 */
+	void end();
 }

@@ -33,6 +33,7 @@ import org.graphstream.boids.BoidForces;
 import org.graphstream.boids.BoidGraph;
 import org.graphstream.boids.BoidForcesFactory;
 import org.graphstream.stream.ElementSink;
+import org.graphstream.stream.GraphReplay;
 import org.miv.pherd.ParticleBox;
 import org.miv.pherd.geom.Point3;
 import org.miv.pherd.ntree.Anchor;
@@ -59,6 +60,11 @@ public class NTreeForcesFactory implements BoidForcesFactory, ElementSink {
 				new BoidCellData());
 		this.ctx = ctx;
 
+		GraphReplay replay = new GraphReplay("replay");
+		replay.addElementSink(this);
+		replay.replay(ctx);
+		replay.removeElementSink(this);
+		
 		ctx.addElementSink(this);
 	}
 
@@ -93,6 +99,16 @@ public class NTreeForcesFactory implements BoidForcesFactory, ElementSink {
 	 */
 	public void resize(Point3 low, Point3 high) {
 		space.resize(low, high);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.boids.BoidForcesFactory#end()
+	 */
+	public void end() {
+		ctx.removeElementSink(this);
+		pbox.removeAllParticles();
 	}
 
 	/*

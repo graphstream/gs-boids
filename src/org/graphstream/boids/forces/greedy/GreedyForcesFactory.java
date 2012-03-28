@@ -35,7 +35,6 @@ import org.graphstream.boids.BoidGraph;
 import org.miv.pherd.geom.Point3;
 
 public class GreedyForcesFactory implements BoidForcesFactory {
-
 	BoidGraph ctx;
 
 	public GreedyForcesFactory(BoidGraph ctx) {
@@ -61,7 +60,7 @@ public class GreedyForcesFactory implements BoidForcesFactory {
 	public void step() {
 		for (Boid b : ctx.<Boid> getEachNode())
 			b.getForces().compute();
-		
+
 		for (Boid b : ctx.<Boid> getEachNode()) {
 			BoidForces f = b.getForces();
 			f.getPosition().copy(f.getNextPosition());
@@ -76,5 +75,13 @@ public class GreedyForcesFactory implements BoidForcesFactory {
 	 * org.miv.pherd.geom.Point3)
 	 */
 	public void resize(Point3 low, Point3 high) {
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.boids.BoidForcesFactory#end()
+	 */
+	public void end() {
 	}
 }

@@ -55,7 +55,7 @@ public class GreedyForces extends BoidForces {
 
 		position.x = r.nextDouble() * (hi.x - lo.x) + lo.x;
 		position.y = r.nextDouble() * (hi.y - lo.y) + lo.y;
-		position.z = r.nextDouble() * (hi.z - lo.z) + lo.z;
+		position.z = 0;
 		
 		nextPosition.copy(position);
 	}
