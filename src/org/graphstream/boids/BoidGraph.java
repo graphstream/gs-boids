@@ -35,6 +35,7 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 
+import org.graphstream.boids.forces.ntree.NTreeForcesFactory;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.NodeFactory;
 import org.graphstream.graph.implementations.AbstractNode;
@@ -42,10 +43,6 @@ import org.graphstream.graph.implementations.AdjacencyListGraph;
 import org.graphstream.stream.file.FileSourceDGS;
 import org.graphstream.ui.swingViewer.Viewer;
 import org.graphstream.ui.swingViewer.util.Camera;
-import org.miv.pherd.ParticleBox;
-import org.miv.pherd.ntree.Anchor;
-import org.miv.pherd.ntree.CellSpace;
-import org.miv.pherd.ntree.OctreeCellSpace;
 
 import java.util.Random;
 
@@ -100,13 +97,6 @@ public class BoidGraph extends AdjacencyListGraph {
 	 */
 	protected long randomSeed;
 
-	protected CellSpace space;
-
-	/**
-	 * The particles.
-	 */
-	protected ParticleBox pbox;
-
 	/**
 	 * Species for boids.
 	 */
@@ -127,14 +117,14 @@ public class BoidGraph extends AdjacencyListGraph {
 	 */
 	protected Random random;
 
+	protected BoidsForcesFactory forcesFactory;
+
 	/**
 	 * New context.
 	 */
 	public BoidGraph() {
 		super("boids-context");
 		setNodeFactory(new BoidFactory());
-
-		int maxParticlesPerCell = 10;
 
 		random = new Random();
 		randomSeed = random.nextLong();
@@ -147,9 +137,7 @@ public class BoidGraph extends AdjacencyListGraph {
 		area = 1;
 		maxSteps = 0;
 		boidSpecies = new HashMap<String, BoidSpecies>();
-		space = new OctreeCellSpace(new Anchor(-area, -area, -area),
-				new Anchor(area, area, area));
-		pbox = new ParticleBox(maxParticlesPerCell, space, new BoidCellData());
+		forcesFactory = new NTreeForcesFactory(this);
 	}
 
 	public BoidGraph(String dgsConfig) throws IOException {
@@ -202,21 +190,13 @@ public class BoidGraph extends AdjacencyListGraph {
 
 	// Access
 
-	public CellSpace getSpace() {
-		return space;
-	}
-
 	public double getArea() {
 		return area;
 	}
 
 	public void setArea(double area) {
 		this.area = area;
-
-		Anchor lo = new Anchor(-area, -area, -area);
-		Anchor hi = new Anchor(area, area, area);
-
-		this.space.resize(lo, hi);
+		forcesFactory.resize(-area, -area, -area, area, area, area);
 	}
 
 	public long getRandomSeed() {
@@ -260,27 +240,18 @@ public class BoidGraph extends AdjacencyListGraph {
 		this.storeForcesAttributes = storeForcesAttributes;
 	}
 
-	public int getMaxParticlesPerCell() {
-		return pbox.getNTree().getMaxParticlePerCell();
-	}
-
 	public int getMaxSteps() {
 		return maxSteps;
 	}
-	
+
 	public void setMaxSteps(int maxSteps) {
 		this.maxSteps = maxSteps;
 	}
 
-	/**
-	 * The current particle box.
-	 * 
-	 * @return The particle box.
-	 */
-	public ParticleBox getPbox() {
-		return pbox;
+	public Random getRandom() {
+		return random;
 	}
-
+	
 	public BoidSpecies getOrCreateSpecies(String name) {
 		return getOrCreateSpecies(name, null);
 	}
@@ -399,14 +370,14 @@ public class BoidGraph extends AdjacencyListGraph {
 
 		while (loop) {
 			stepBegins(step);
-			
+
 			for (BoidSpecies sp : boidSpecies.values())
 				sp.terminateLoop();
-			
+
 			sleep(sleepTime);
-			
+
 			step++;
-			
+
 			if (maxSteps > 0 && step > maxSteps)
 				loop = false;
 		}
@@ -419,7 +390,7 @@ public class BoidGraph extends AdjacencyListGraph {
 	@Override
 	public void stepBegins(double step) {
 		super.stepBegins(step);
-		pbox.step();
+		forcesFactory.step();
 	}
 
 	public boolean isLooping() {
@@ -527,7 +498,9 @@ public class BoidGraph extends AdjacencyListGraph {
 				species = getDefaultSpecies();
 
 			Boid b = species.createBoid(id);
-			pbox.addParticle(b.getParticle());
+			BoidForces f = forcesFactory.createNewForces(b);
+			
+			b.setForces(f);
 
 			return b;
 		}
