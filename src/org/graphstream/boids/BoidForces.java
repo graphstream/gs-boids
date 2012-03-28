@@ -133,11 +133,70 @@ public abstract class BoidForces {
 	}
 
 	/**
-	 * Is the another point is space in the field of view?
+	 * True if the given position is visible by the boid.
+	 * 
+	 * <p>
+	 * This method first check if the given point is under the max distance of
+	 * view. If so, it checks if the point is in the angle of view. The angle of
+	 * view is specified as the cosine of the angle between the boid direction
+	 * vector and the vector between the boid and the given point. This means
+	 * that -1 is equal to a 360 degree of vision (the angle of view test is
+	 * deactivated in this case), 0 means 180 degree angle, and 0.5 a 90 degree
+	 * angle for example.
+	 * </p>
+	 * 
+	 * @param source
+	 *            The source boid.
+	 * @param point
+	 *            The point to consider.
+	 * 
+	 * @return True if point is visible by source.
 	 */
-	public abstract boolean isVisible(Boid boid, Point3 other);
+	public boolean isVisible(Boid boid, Point3 point) {
+		//
+		// Check both the distance and angle of view according to the
+		// direction
+		// of the source.
+		//
+		BoidSpecies species = boid.getSpecies();
+
+		Point3 pos = boid.getPosition();
+		double d = pos.distance(point);
+
+		// At good distance.
+		if (d <= species.getViewZone()) {
+			//
+			// If there is an angle of view.
+			//
+			if (species.getAngleOfView() > -1) {
+				Vector3 dir = new Vector3(boid.getForces().getDirection());
+				Vector3 light = new Vector3(point.x - pos.x, point.y - pos.y,
+						point.z - pos.z);
+
+				dir.normalize();
+				light.normalize();
+
+				double angle = dir.dotProduct(light);
+
+				//
+				// In the field of view.
+				//
+				if (angle > species.getAngleOfView())
+					return true;
+			} else {
+				return true;
+			}
+		}
+
+		//
+		// Not in view.
+		//
+		return false;
+	}
 
 	public abstract void setPosition(double x, double y, double z);
 
 	public abstract Point3 getPosition();
+	
+	public abstract Vector3 getDirection();
 }

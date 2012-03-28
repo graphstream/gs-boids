@@ -28,30 +28,38 @@
  */
 package org.graphstream.boids.forces.greedy;
 
-import org.graphstream.boids.Boid;
 import org.graphstream.boids.BoidForces;
 import org.miv.pherd.geom.Point3;
+import org.miv.pherd.geom.Vector3;
 
 public class GreedyForces extends BoidForces {
+
+	Point3 position;
 
 	public void compute() {
 		// TODO Auto-generated method stub
 
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.boids.BoidForces#getPosition()
+	 */
 	public Point3 getPosition() {
-		// TODO Auto-generated method stub
+		return position;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.boids.BoidForces#setPosition(double, double, double)
+	 */
+	public void setPosition(double x, double y, double z) {
+		position.set(x, y, z);
+	}
+
+	public Vector3 getDirection() {
 		return null;
 	}
-
-	public boolean isVisible(Boid boid, Point3 other) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	public void setPosition(double x, double y, double z) {
-		// TODO Auto-generated method stub
-
-	}
-
 }
