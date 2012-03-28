@@ -43,6 +43,7 @@ import org.graphstream.graph.implementations.AdjacencyListGraph;
 import org.graphstream.stream.file.FileSourceDGS;
 import org.graphstream.ui.swingViewer.Viewer;
 import org.graphstream.ui.swingViewer.util.Camera;
+import org.miv.pherd.geom.Point3;
 
 import java.util.Random;
 
@@ -119,6 +120,9 @@ public class BoidGraph extends AdjacencyListGraph {
 
 	protected BoidForcesFactory forcesFactory;
 
+	protected Point3 lowAnchor;
+	protected Point3 highAnchor;
+
 	/**
 	 * New context.
 	 */
@@ -129,6 +133,8 @@ public class BoidGraph extends AdjacencyListGraph {
 		random = new Random();
 		randomSeed = random.nextLong();
 		random = new Random(randomSeed);
+		lowAnchor = new Point3(-1, -1, -1);
+		highAnchor = new Point3(1, 1, 1);
 		loop = false;
 		normalizeMode = true;
 		removeCaughtBoids = false;
@@ -196,7 +202,19 @@ public class BoidGraph extends AdjacencyListGraph {
 
 	public void setArea(double area) {
 		this.area = area;
-		forcesFactory.resize(-area, -area, -area, area, area, area);
+		
+		lowAnchor.set(-area, -area, -area);
+		highAnchor.set(area, area, area);
+
+		forcesFactory.resize(lowAnchor, highAnchor);
+	}
+
+	public Point3 getLowAnchor() {
+		return lowAnchor;
+	}
+
+	public Point3 getHighAnchor() {
+		return highAnchor;
 	}
 
 	public long getRandomSeed() {
@@ -251,7 +269,7 @@ public class BoidGraph extends AdjacencyListGraph {
 	public Random getRandom() {
 		return random;
 	}
-	
+
 	public BoidSpecies getOrCreateSpecies(String name) {
 		return getOrCreateSpecies(name, null);
 	}
@@ -499,7 +517,7 @@ public class BoidGraph extends AdjacencyListGraph {
 
 			Boid b = species.createBoid(id);
 			BoidForces f = forcesFactory.createNewForces(b);
-			
+
 			b.setForces(f);
 
 			return b;

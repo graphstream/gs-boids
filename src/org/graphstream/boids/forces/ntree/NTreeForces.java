@@ -28,17 +28,15 @@
  */
 package org.graphstream.boids.forces.ntree;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
 import org.graphstream.boids.Boid;
 import org.graphstream.boids.BoidForces;
-import org.graphstream.boids.BoidSpecies;
-import org.graphstream.boids.forces.ntree.NTreeForcesFactory.BoidParticle;
 import org.miv.pherd.Particle;
 import org.miv.pherd.geom.Point3;
-import org.miv.pherd.geom.Vector3;
 import org.miv.pherd.ntree.Cell;
 
 /**
@@ -58,6 +56,7 @@ public class NTreeForces extends BoidForces {
 	BoidParticle p;
 
 	public NTreeForces(BoidParticle p) {
+		super(p.b);
 		this.p = p;
 	}
 
@@ -78,41 +77,14 @@ public class NTreeForces extends BoidForces {
 	public void setPosition(double x, double y, double z) {
 		p.setPosition(x, y, z);
 	}
-	
-	public Vector3 getDirection() {
-		return p.dir;
-	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.graphstream.boids.BoidForces#compute()
+	 * @see org.graphstream.boids.BoidForces#getNextPosition()
 	 */
-	public void compute() {
-		Cell startCell = p.getCell().getTree().getRootCell();
-
-		barycenter.set(0, 0, 0);
-		direction.fill(0);
-		attraction.fill(0);
-		repulsion.fill(0);
-		countAtt = 0;
-		countRep = 0;
-
-		Set<Boid> contacts = new HashSet<Boid>();
-
-		exploreTree(startCell, contacts);
-		p.b.checkNeighborhood(contacts.toArray(new Boid[contacts.size()]));
-
-		if (countAtt > 0) {
-			barycenter.scale(1f / countAtt, 1f / countAtt, 1f / countAtt);
-			direction.scalarDiv(countAtt);
-			attraction.set(barycenter.x - p.b.getPosition().x, barycenter.y
-					- p.b.getPosition().y, barycenter.z - p.b.getPosition().z);
-		}
-
-		if (countRep > 0) {
-			repulsion.scalarDiv(countRep);
-		}
+	public Point3 getNextPosition() {
+		return p.getNextPosition();
 	}
 
 	/**
@@ -125,7 +97,7 @@ public class NTreeForces extends BoidForces {
 	 *            The cell to explore recursively.
 	 */
 	protected void exploreTree(Cell cell, Set<Boid> contacts) {
-		if (intersection(p.b, cell)) {
+		if (intersection(boid, cell)) {
 			if (cell.isLeaf())
 				forcesFromCell(cell, contacts);
 			else {
@@ -148,21 +120,15 @@ public class NTreeForces extends BoidForces {
 	 */
 	protected void forcesFromCell(Cell cell, Set<Boid> contacts) {
 		Iterator<? extends Particle> particles = cell.getParticles();
-		Vector3 rep = new Vector3();
-
+		
 		while (particles.hasNext()) {
 			Particle particle = particles.next();
 
 			if (particle instanceof BoidParticle) {
-				if (p != particle && isVisible(p.b, particle.getPosition())) {
+				if (p != particle && isVisible(boid, particle.getPosition()))
 					contacts.add(((BoidParticle) particle).b);
-					actionWithNeighboor((BoidParticle) particle, rep);
-				}
 			}
 		}
-
-		// barycenter.move( data.getCenter() );
-		// direction.add( data.getDirection() );
 	}
 
 	/**
@@ -219,46 +185,17 @@ public class NTreeForces extends BoidForces {
 		return true;
 	}
 
-	/**
-	 * A boid particle p2 that is visible by p1 as been found, integrate it in
-	 * the forces that apply to the boid p1.
+	/*
+	 * (non-Javadoc)
 	 * 
-	 * @param p1
-	 *            The source boid.
-	 * @param p2
-	 *            the boid visible by p1.
-	 * @param rep
-	 *            The repulsion to compute.
+	 * @see org.graphstream.boids.BoidForces#getNeighborhood()
 	 */
-	protected void actionWithNeighboor(BoidParticle p2, Vector3 rep) {
-		Point3 pp = p2.getPosition();
-		BoidSpecies p1Species = p.b.getSpecies();
-		BoidSpecies p2Species = p2.getBoid().getSpecies();
-		double v = p.b.getSpecies().getViewZone();
+	public Collection<Boid> getNeighborhood() {
+		HashSet<Boid> neigh = new HashSet<Boid>();
+		Cell startCell = p.getCell().getTree().getRootCell();
 
-		rep.set(p.getPosition().x - pp.x, p.getPosition().y - pp.y, p
-				.getPosition().z
-				- pp.z);
+		exploreTree(startCell, neigh);
 
-		double len = rep.length();
-
-		if (len != 0) {
-			if (p1Species != p2Species)
-				rep.scalarMult(1 / (len * len) * p2Species.getFearFactor());
-			else
-				rep.scalarMult(1 / (len * len));
-		}
-
-		double a = Math.log(Math.min(len, v)) / Math.log(v);
-		rep.scalarMult(a);
-
-		repulsion.add(rep);
-		countRep++;
-
-		if (p1Species == p2Species) {
-			barycenter.move(pp);
-			direction.add(p2.dir);
-			countAtt++;
-		}
+		return neigh;
 	}
 }

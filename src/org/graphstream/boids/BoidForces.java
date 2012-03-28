@@ -28,6 +28,8 @@
  */
 package org.graphstream.boids;
 
+import java.util.Collection;
+
 import org.miv.pherd.geom.Point3;
 import org.miv.pherd.geom.Vector3;
 
@@ -77,16 +79,26 @@ public abstract class BoidForces {
 	 */
 	public int countRep;
 
+	protected Boid boid;
+
+	/**
+	 * Direction of the boid.
+	 */
+	protected Vector3 dir;
+
 	/**
 	 * Forces all set at zero.
 	 */
-	public BoidForces() {
+	public BoidForces(Boid b) {
 		barycenter = new Point3();
 		direction = new Vector3();
 		attraction = new Vector3();
 		repulsion = new Vector3();
 		countAtt = 0;
 		countRep = 0;
+		boid = b;
+		dir = new Vector3(((BoidGraph) b.getGraph()).getRandom().nextDouble(),
+				((BoidGraph) b.getGraph()).getRandom().nextDouble(), 0);
 	}
 
 	/**
@@ -99,7 +111,67 @@ public abstract class BoidForces {
 	 * @param startCell
 	 *            The start cell (usually the root cell of the n-tree).
 	 */
-	public abstract void compute();
+	public void compute() {
+		Collection<Boid> neigh;
+		BoidSpecies species = boid.getSpecies();
+		Vector3 dir = getDirection();
+		Vector3 rep = new Vector3();
+		Point3 nextPos = getNextPosition();
+
+		barycenter.set(0, 0, 0);
+		direction.fill(0);
+		attraction.fill(0);
+		repulsion.fill(0);
+		countAtt = 0;
+		countRep = 0;
+
+		neigh = getNeighborhood();
+
+		for (Boid b : neigh) {
+			actionWithNeighboor(b, rep);
+		}
+
+		boid.checkNeighborhood(neigh.toArray(new Boid[neigh.size()]));
+
+		if (countAtt > 0) {
+			barycenter.scale(1f / countAtt, 1f / countAtt, 1f / countAtt);
+			direction.scalarDiv(countAtt);
+			attraction
+					.set(barycenter.x - boid.getPosition().x, barycenter.y
+							- boid.getPosition().y, barycenter.z
+							- boid.getPosition().z);
+		}
+
+		if (countRep > 0) {
+			repulsion.scalarDiv(countRep);
+		}
+
+		direction.scalarMult(species.getDirectionFactor());
+		attraction.scalarMult(species.getAttractionFactor());
+		repulsion.scalarMult(species.getRepulsionFactor());
+		dir.scalarMult(species.getInertia());
+
+		dir.add(direction);
+		dir.add(attraction);
+		dir.add(repulsion);
+
+		if (((BoidGraph) boid.getGraph()).isNormalizeMode()) {
+			double len = dir.normalize();
+			if (len <= species.getMinSpeed())
+				len = species.getMinSpeed();
+			else if (len >= species.getMaxSpeed())
+				len = species.getMaxSpeed();
+
+			dir.scalarMult(species.getSpeedFactor() * len);
+		} else {
+			dir.scalarMult(species.getSpeedFactor());
+		}
+
+		checkWalls();
+		nextPos.move(dir);
+
+		boid.setAttribute("xyz", nextPos.x, nextPos.y, nextPos.z);
+	}
 
 	/**
 	 * Integrate a repulsion vector.
@@ -130,6 +202,81 @@ public abstract class BoidForces {
 	 */
 	public void moveBarycenter(Point3 p) {
 		barycenter.move(p);
+	}
+
+	/**
+	 * A boid particle p2 that is visible by p1 as been found, integrate it in
+	 * the forces that apply to the boid p1.
+	 * 
+	 * @param p1
+	 *            The source boid.
+	 * @param b
+	 *            the boid visible by p1.
+	 * @param rep
+	 *            The repulsion to compute.
+	 */
+	protected void actionWithNeighboor(Boid b, Vector3 rep) {
+		Point3 p1 = boid.getPosition();
+		Point3 p2 = b.getPosition();
+		BoidSpecies p1Species = boid.getSpecies();
+		BoidSpecies p2Species = b.getSpecies();
+		double v = boid.getSpecies().getViewZone();
+
+		rep.set(p1.x - p2.x, p1.y - p2.y, p1.z - p2.z);
+
+		double len = rep.length();
+
+		if (len != 0) {
+			if (p1Species != p2Species)
+				rep.scalarMult(1 / (len * len) * p2Species.getFearFactor());
+			else
+				rep.scalarMult(1 / (len * len));
+		}
+
+		double a = Math.log(Math.min(len, v)) / Math.log(v);
+		rep.scalarMult(a);
+
+		repulsion.add(rep);
+		countRep++;
+
+		if (p1Species == p2Species) {
+			barycenter.move(p2);
+			direction.add(b.getForces().getDirection());
+			countAtt++;
+		}
+	}
+
+	/**
+	 * Check the boid does not go out of the space walls.
+	 */
+	protected void checkWalls() {
+		float aarea = 0.000001f;
+		Point3 lo = ((BoidGraph) boid.getGraph()).getLowAnchor();
+		Point3 hi = ((BoidGraph) boid.getGraph()).getHighAnchor();
+		Vector3 dir = getDirection();
+		Point3 nextPos = getNextPosition();
+
+		if (nextPos.x + dir.data[0] <= lo.x + aarea) {
+			nextPos.x = lo.x + aarea;
+			dir.data[0] = -dir.data[0];
+		} else if (nextPos.x + dir.data[0] >= hi.x - aarea) {
+			nextPos.x = hi.x - aarea;
+			dir.data[0] = -dir.data[0];
+		}
+		if (nextPos.y + dir.data[1] <= lo.y + aarea) {
+			nextPos.y = lo.y + aarea;
+			dir.data[1] = -dir.data[1];
+		} else if (nextPos.y + dir.data[1] >= hi.y - aarea) {
+			nextPos.y = hi.y - aarea;
+			dir.data[1] = -dir.data[1];
+		}
+		if (nextPos.z + dir.data[2] <= lo.z + aarea) {
+			nextPos.z = lo.z + aarea;
+			dir.data[2] = -dir.data[2];
+		} else if (nextPos.z + dir.data[2] >= hi.z - aarea) {
+			nextPos.z = hi.z - aarea;
+			dir.data[2] = -dir.data[2];
+		}
 	}
 
 	/**
@@ -169,6 +316,7 @@ public abstract class BoidForces {
 			// If there is an angle of view.
 			//
 			if (species.getAngleOfView() > -1) {
+				double angle;
 				Vector3 dir = new Vector3(boid.getForces().getDirection());
 				Vector3 light = new Vector3(point.x - pos.x, point.y - pos.y,
 						point.z - pos.z);
@@ -176,7 +324,7 @@ public abstract class BoidForces {
 				dir.normalize();
 				light.normalize();
 
-				double angle = dir.dotProduct(light);
+				angle = dir.dotProduct(light);
 
 				//
 				// In the field of view.
@@ -194,9 +342,15 @@ public abstract class BoidForces {
 		return false;
 	}
 
+	public Vector3 getDirection() {
+		return dir;
+	}
+
 	public abstract void setPosition(double x, double y, double z);
 
 	public abstract Point3 getPosition();
-	
-	public abstract Vector3 getDirection();
+
+	public abstract Point3 getNextPosition();
+
+	public abstract Collection<Boid> getNeighborhood();
 }

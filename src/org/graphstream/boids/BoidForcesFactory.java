@@ -28,6 +28,8 @@
  */
 package org.graphstream.boids;
 
+import org.miv.pherd.geom.Point3;
+
 /**
  * Object used to create and compute forces of boids.
  * 
@@ -57,6 +59,5 @@ public interface BoidForcesFactory {
 	 * @param maxy
 	 * @param maxz
 	 */
-	void resize(double minx, double miny, double minz, double maxx,
-			double maxy, double maxz);
+	void resize(Point3 low, Point3 high);
 }

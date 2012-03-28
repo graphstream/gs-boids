@@ -26,90 +26,75 @@
  * The fact that you are presently reading this means that you have had
  * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
  */
-package org.graphstream.boids.forces.greedy;
-
-import java.util.Collection;
-import java.util.LinkedList;
+package org.graphstream.boids.forces.ntree;
 
 import org.graphstream.boids.Boid;
-import org.graphstream.boids.BoidForces;
 import org.graphstream.boids.BoidGraph;
+import org.miv.pherd.Particle;
 import org.miv.pherd.geom.Point3;
-import org.miv.pherd.geom.Vector3;
 
-public class GreedyForces extends BoidForces {
+/**
+ * Internal representation of the boid position, and direction in the forces
+ * system.
+ * 
+ * @author Guilhelm Savin
+ * @author Antoine Dutot
+ */
+public class BoidParticle extends Particle {
+	protected Boid b;
 
-	Point3 position;
-	Vector3 direction;
+	/**
+	 * New particle.
+	 * 
+	 * @param ctx
+	 *            The set of global parameters.
+	 */
+	public BoidParticle(BoidGraph ctx, Boid b) {
+		super(b.getId(), ctx.getRandom().nextDouble() * (ctx.getArea() * 2)
+				- ctx.getArea(), ctx.getRandom().nextDouble()
+				* (ctx.getArea() * 2) - ctx.getArea(), 0);
 
-	public GreedyForces(Boid b) {
-		super(b);
+		this.b = b;
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.graphstream.boids.BoidForces#compute()
+	 * @see org.miv.pherd.Particle#move(int)
 	 */
-	public void compute() {
-		BoidGraph g = (BoidGraph) boid.getGraph();
-		LinkedList<Boid> contacts = new LinkedList<Boid>();
-		Vector3 rep = new Vector3();
-
-		for (Boid b : g.<Boid> getEachNode()) {
-			if (isVisible(boid, b.getPosition())) {
-				actionWithNeighboor(b, rep);
-				contacts.add(b);
-			}
-		}
-
-		boid.checkNeighborhood(contacts.toArray(new Boid[contacts.size()]));
+	@Override
+	public void move(int time) {
+		b.getForces().compute();
+		moved = true;
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.graphstream.boids.BoidForces#getPosition()
+	 * @see org.miv.pherd.Particle#inserted()
 	 */
-	public Point3 getPosition() {
-		return position;
+	@Override
+	public void inserted() {
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.graphstream.boids.BoidForces#setPosition(double, double, double)
+	 * @see org.miv.pherd.Particle#removed()
 	 */
+	@Override
+	public void removed() {
+	}
+
+	public Boid getBoid() {
+		return b;
+	}
+
 	public void setPosition(double x, double y, double z) {
-		position.set(x, y, z);
+		initPos(x, y, z);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.graphstream.boids.BoidForces#getDirection()
-	 */
-	public Vector3 getDirection() {
-		return direction;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.graphstream.boids.BoidForces#getNeighborhood()
-	 */
-	public Collection<Boid> getNeighborhood() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.graphstream.boids.BoidForces#getNextPosition()
-	 */
 	public Point3 getNextPosition() {
-		// TODO Auto-generated method stub
-		return null;
+		return nextPos;
 	}
 }

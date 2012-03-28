@@ -31,21 +31,40 @@ package org.graphstream.boids.forces.greedy;
 import org.graphstream.boids.Boid;
 import org.graphstream.boids.BoidForces;
 import org.graphstream.boids.BoidForcesFactory;
+import org.miv.pherd.geom.Point3;
 
 public class GreedyForcesFactory implements BoidForcesFactory {
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.boids.BoidForcesFactory#createNewForces(org.graphstream
+	 * .boids.Boid)
+	 */
 	public BoidForces createNewForces(Boid b) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	public void resize(double minx, double miny, double minz, double maxx,
-			double maxy, double maxz) {
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.boids.BoidForcesFactory#step()
+	 */
+	public void step() {
 		// TODO Auto-generated method stub
 
 	}
 
-	public void step() {
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.boids.BoidForcesFactory#resize(org.miv.pherd.geom.Point3,
+	 * org.miv.pherd.geom.Point3)
+	 */
+	public void resize(Point3 low, Point3 high) {
 		// TODO Auto-generated method stub
 
 	}
