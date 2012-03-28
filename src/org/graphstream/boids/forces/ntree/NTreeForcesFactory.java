@@ -1,14 +1,12 @@
 /*
- * Copyright 2006 - 2011 
- *     Julien Baudry	<julien.baudry@graphstream-project.org>
+ * Copyright 2006 - 2012
  *     Antoine Dutot	<antoine.dutot@graphstream-project.org>
- *     Yoann Pigné		<yoann.pigne@graphstream-project.org>
  *     Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
  * 
- * This file is part of GraphStream <http://graphstream-project.org>.
+ * This file is part of gs-boids <http://graphstream-project.org>.
  * 
- * GraphStream is a library whose purpose is to handle static or dynamic
- * graph, create them from scratch, file or any source and display them.
+ * gs-boids is a library whose purpose is to provide a boid behavior to a set of
+ * particles.
  * 
  * This program is free software distributed under the terms of two licenses, the
  * CeCILL-C license that fits European law, and the GNU Lesser General Public
@@ -34,7 +32,7 @@ import org.graphstream.boids.Boid;
 import org.graphstream.boids.BoidForces;
 import org.graphstream.boids.BoidGraph;
 import org.graphstream.boids.BoidSpecies;
-import org.graphstream.boids.BoidsForcesFactory;
+import org.graphstream.boids.BoidForcesFactory;
 import org.graphstream.stream.ElementSink;
 import org.miv.pherd.Particle;
 import org.miv.pherd.ParticleBox;
@@ -43,7 +41,7 @@ import org.miv.pherd.ntree.Anchor;
 import org.miv.pherd.ntree.CellSpace;
 import org.miv.pherd.ntree.OctreeCellSpace;
 
-public class NTreeForcesFactory implements BoidsForcesFactory, ElementSink {
+public class NTreeForcesFactory implements BoidForcesFactory, ElementSink {
 
 	protected CellSpace space;
 	/**
@@ -62,21 +60,39 @@ public class NTreeForcesFactory implements BoidsForcesFactory, ElementSink {
 		this.pbox = new ParticleBox(maxParticlesPerCell, space,
 				new BoidCellData());
 		this.ctx = ctx;
-		
+
 		ctx.addElementSink(this);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.boids.BoidForcesFactory#createNewForces(org.graphstream
+	 * .boids.Boid)
+	 */
 	public BoidForces createNewForces(Boid b) {
 		BoidParticle p = new BoidParticle(b);
 		NTreeForces f = new NTreeForces(p);
-		
+
 		return f;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.boids.BoidForcesFactory#step()
+	 */
 	public void step() {
 		pbox.step();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.boids.BoidForcesFactory#resize(double, double,
+	 * double, double, double, double)
+	 */
 	public void resize(double minx, double miny, double minz, double maxx,
 			double maxy, double maxz) {
 		Anchor lo = new Anchor(minx, miny, minz);
@@ -126,6 +142,11 @@ public class NTreeForcesFactory implements BoidsForcesFactory, ElementSink {
 					.getRandom().nextDouble(), 0);
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.miv.pherd.Particle#move(int)
+		 */
 		@Override
 		public void move(int time) {
 			BoidSpecies species = b.getSpecies();
@@ -163,10 +184,20 @@ public class NTreeForcesFactory implements BoidsForcesFactory, ElementSink {
 			moved = true;
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.miv.pherd.Particle#inserted()
+		 */
 		@Override
 		public void inserted() {
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.miv.pherd.Particle#removed()
+		 */
 		@Override
 		public void removed() {
 		}
@@ -222,14 +253,18 @@ public class NTreeForcesFactory implements BoidsForcesFactory, ElementSink {
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.graphstream.stream.ElementSink#edgeRemoved(java.lang.String, long, java.lang.String)
+	 * 
+	 * @see org.graphstream.stream.ElementSink#edgeRemoved(java.lang.String,
+	 * long, java.lang.String)
 	 */
 	public void edgeRemoved(String sourceId, long timeId, String edgeId) {
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.graphstream.stream.ElementSink#graphCleared(java.lang.String, long)
+	 * 
+	 * @see org.graphstream.stream.ElementSink#graphCleared(java.lang.String,
+	 * long)
 	 */
 	public void graphCleared(String sourceId, long timeId) {
 		pbox.removeAllParticles();
@@ -237,16 +272,20 @@ public class NTreeForcesFactory implements BoidsForcesFactory, ElementSink {
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.graphstream.stream.ElementSink#nodeAdded(java.lang.String, long, java.lang.String)
+	 * 
+	 * @see org.graphstream.stream.ElementSink#nodeAdded(java.lang.String, long,
+	 * java.lang.String)
 	 */
 	public void nodeAdded(String sourceId, long timeId, String nodeId) {
 		Boid b = ctx.getNode(nodeId);
 		pbox.addParticle(((NTreeForces) b.getForces()).p);
 	}
-	
+
 	/*
 	 * (non-Javadoc)
-	 * @see org.graphstream.stream.ElementSink#nodeRemoved(java.lang.String, long, java.lang.String)
+	 * 
+	 * @see org.graphstream.stream.ElementSink#nodeRemoved(java.lang.String,
+	 * long, java.lang.String)
 	 */
 	public void nodeRemoved(String sourceId, long timeId, String nodeId) {
 		Boid b = ctx.getNode(nodeId);
@@ -255,7 +294,9 @@ public class NTreeForcesFactory implements BoidsForcesFactory, ElementSink {
 
 	/*
 	 * (non-Javadoc)
-	 * @see org.graphstream.stream.ElementSink#stepBegins(java.lang.String, long, double)
+	 * 
+	 * @see org.graphstream.stream.ElementSink#stepBegins(java.lang.String,
+	 * long, double)
 	 */
 	public void stepBegins(String sourceId, long timeId, double step) {
 	}

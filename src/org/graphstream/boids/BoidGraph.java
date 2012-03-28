@@ -117,7 +117,7 @@ public class BoidGraph extends AdjacencyListGraph {
 	 */
 	protected Random random;
 
-	protected BoidsForcesFactory forcesFactory;
+	protected BoidForcesFactory forcesFactory;
 
 	/**
 	 * New context.

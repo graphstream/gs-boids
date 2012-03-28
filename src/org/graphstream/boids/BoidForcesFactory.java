@@ -1,14 +1,12 @@
 /*
- * Copyright 2006 - 2011 
- *     Julien Baudry	<julien.baudry@graphstream-project.org>
+ * Copyright 2006 - 2012
  *     Antoine Dutot	<antoine.dutot@graphstream-project.org>
- *     Yoann Pigné		<yoann.pigne@graphstream-project.org>
  *     Guilhelm Savin	<guilhelm.savin@graphstream-project.org>
  * 
- * This file is part of GraphStream <http://graphstream-project.org>.
+ * This file is part of gs-boids <http://graphstream-project.org>.
  * 
- * GraphStream is a library whose purpose is to handle static or dynamic
- * graph, create them from scratch, file or any source and display them.
+ * gs-boids is a library whose purpose is to provide a boid behavior to a set of
+ * particles.
  * 
  * This program is free software distributed under the terms of two licenses, the
  * CeCILL-C license that fits European law, and the GNU Lesser General Public
@@ -30,11 +28,35 @@
  */
 package org.graphstream.boids;
 
-public interface BoidsForcesFactory {
+/**
+ * Object used to create and compute forces of boids.
+ * 
+ */
+public interface BoidForcesFactory {
+	/**
+	 * Create a new forces object for a boid.
+	 * 
+	 * @param b
+	 *            the boid
+	 * @return a new forces object associate with the boid
+	 */
 	BoidForces createNewForces(Boid b);
 
+	/**
+	 * Compute forces for all boids.
+	 */
 	void step();
 
+	/**
+	 * Resize the space.
+	 * 
+	 * @param minx
+	 * @param miny
+	 * @param minz
+	 * @param maxx
+	 * @param maxy
+	 * @param maxz
+	 */
 	void resize(double minx, double miny, double minz, double maxx,
 			double maxy, double maxz);
 }
