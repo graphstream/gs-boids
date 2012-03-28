@@ -253,7 +253,6 @@ public abstract class BoidForces {
 		float aarea = 0.000001f;
 		Point3 lo = ((BoidGraph) boid.getGraph()).getLowAnchor();
 		Point3 hi = ((BoidGraph) boid.getGraph()).getHighAnchor();
-		Vector3 dir = getDirection();
 		Point3 nextPos = getNextPosition();
 
 		if (nextPos.x + dir.data[0] <= lo.x + aarea) {

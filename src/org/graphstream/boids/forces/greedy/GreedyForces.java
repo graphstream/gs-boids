@@ -30,40 +30,34 @@ package org.graphstream.boids.forces.greedy;
 
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Random;
 
 import org.graphstream.boids.Boid;
 import org.graphstream.boids.BoidForces;
 import org.graphstream.boids.BoidGraph;
 import org.miv.pherd.geom.Point3;
-import org.miv.pherd.geom.Vector3;
 
 public class GreedyForces extends BoidForces {
 
 	Point3 position;
-	Vector3 direction;
+	Point3 nextPosition;
 
 	public GreedyForces(Boid b) {
 		super(b);
-	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.graphstream.boids.BoidForces#compute()
-	 */
-	public void compute() {
-		BoidGraph g = (BoidGraph) boid.getGraph();
-		LinkedList<Boid> contacts = new LinkedList<Boid>();
-		Vector3 rep = new Vector3();
+		BoidGraph ctx = (BoidGraph) b.getGraph();
+		Random r = ctx.getRandom();
+		Point3 lo = ctx.getLowAnchor();
+		Point3 hi = ctx.getHighAnchor();
 
-		for (Boid b : g.<Boid> getEachNode()) {
-			if (isVisible(boid, b.getPosition())) {
-				actionWithNeighboor(b, rep);
-				contacts.add(b);
-			}
-		}
+		position = new Point3();
+		nextPosition = new Point3();
 
-		boid.checkNeighborhood(contacts.toArray(new Boid[contacts.size()]));
+		position.x = r.nextDouble() * (hi.x - lo.x) + lo.x;
+		position.y = r.nextDouble() * (hi.y - lo.y) + lo.y;
+		position.z = r.nextDouble() * (hi.z - lo.z) + lo.z;
+		
+		nextPosition.copy(position);
 	}
 
 	/*
@@ -87,20 +81,18 @@ public class GreedyForces extends BoidForces {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.graphstream.boids.BoidForces#getDirection()
-	 */
-	public Vector3 getDirection() {
-		return direction;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
 	 * @see org.graphstream.boids.BoidForces#getNeighborhood()
 	 */
 	public Collection<Boid> getNeighborhood() {
-		// TODO Auto-generated method stub
-		return null;
+		BoidGraph g = (BoidGraph) boid.getGraph();
+		LinkedList<Boid> contacts = new LinkedList<Boid>();
+
+		for (Boid b : g.<Boid> getEachNode()) {
+			if (isVisible(boid, b.getPosition()))
+				contacts.add(b);
+		}
+		
+		return contacts;
 	}
 
 	/*
@@ -109,7 +101,6 @@ public class GreedyForces extends BoidForces {
 	 * @see org.graphstream.boids.BoidForces#getNextPosition()
 	 */
 	public Point3 getNextPosition() {
-		// TODO Auto-generated method stub
-		return null;
+		return nextPosition;
 	}
 }

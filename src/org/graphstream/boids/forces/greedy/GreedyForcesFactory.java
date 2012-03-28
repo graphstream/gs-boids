@@ -31,9 +31,16 @@ package org.graphstream.boids.forces.greedy;
 import org.graphstream.boids.Boid;
 import org.graphstream.boids.BoidForces;
 import org.graphstream.boids.BoidForcesFactory;
+import org.graphstream.boids.BoidGraph;
 import org.miv.pherd.geom.Point3;
 
 public class GreedyForcesFactory implements BoidForcesFactory {
+
+	BoidGraph ctx;
+
+	public GreedyForcesFactory(BoidGraph ctx) {
+		this.ctx = ctx;
+	}
 
 	/*
 	 * (non-Javadoc)
@@ -43,8 +50,7 @@ public class GreedyForcesFactory implements BoidForcesFactory {
 	 * .boids.Boid)
 	 */
 	public BoidForces createNewForces(Boid b) {
-		// TODO Auto-generated method stub
-		return null;
+		return new GreedyForces(b);
 	}
 
 	/*
@@ -53,8 +59,13 @@ public class GreedyForcesFactory implements BoidForcesFactory {
 	 * @see org.graphstream.boids.BoidForcesFactory#step()
 	 */
 	public void step() {
-		// TODO Auto-generated method stub
-
+		for (Boid b : ctx.<Boid> getEachNode())
+			b.getForces().compute();
+		
+		for (Boid b : ctx.<Boid> getEachNode()) {
+			BoidForces f = b.getForces();
+			f.getPosition().copy(f.getNextPosition());
+		}
 	}
 
 	/*
@@ -65,8 +76,5 @@ public class GreedyForcesFactory implements BoidForcesFactory {
 	 * org.miv.pherd.geom.Point3)
 	 */
 	public void resize(Point3 low, Point3 high) {
-		// TODO Auto-generated method stub
-
 	}
-
 }
