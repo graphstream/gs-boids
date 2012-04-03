@@ -146,6 +146,9 @@ public class Boid extends AdjacencyListNode {
 				if (getEdgeBetween(b2) == null)
 					getGraph().addEdge(getEdgeId(this, b2), this, b2);
 			}
+		} else {
+			while (getDegree() > 0)
+				getGraph().removeEdge(getEdge(0));
 		}
 	}
 
