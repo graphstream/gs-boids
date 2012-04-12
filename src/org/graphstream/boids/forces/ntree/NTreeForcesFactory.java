@@ -51,7 +51,7 @@ public class NTreeForcesFactory implements BoidForcesFactory, ElementSink {
 	protected BoidGraph ctx;
 
 	public NTreeForcesFactory(BoidGraph ctx) {
-		double area = 1;
+		double area = ctx.getArea();
 		int maxParticlesPerCell = 10;
 
 		this.space = new OctreeCellSpace(new Anchor(-area, -area, -area),
@@ -59,12 +59,19 @@ public class NTreeForcesFactory implements BoidForcesFactory, ElementSink {
 		this.pbox = new ParticleBox(maxParticlesPerCell, space,
 				new BoidCellData());
 		this.ctx = ctx;
+	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.boids.BoidForcesFactory#init()
+	 */
+	public void init() {
 		GraphReplay replay = new GraphReplay("replay");
 		replay.addElementSink(this);
 		replay.replay(ctx);
 		replay.removeElementSink(this);
-		
+
 		ctx.addElementSink(this);
 	}
 

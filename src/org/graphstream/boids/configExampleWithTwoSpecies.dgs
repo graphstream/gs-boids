@@ -55,3 +55,5 @@ cg boids.species.bee.add_species_name_in_ui_class=true
 
 cg boids.species.moustik.count=80
 cg boids.species.bee.count=40
+
+cg boids.forces_factory=org.graphstream.boids.forces.ntree.NTreeForcesFactory

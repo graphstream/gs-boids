@@ -36,6 +36,12 @@ import org.miv.pherd.geom.Point3;
  */
 public interface BoidForcesFactory {
 	/**
+	 * Called by {@link org.graphstream.boids.BoidGraph} when forces factory is
+	 * set. It allows the forces factory to execute some code before it starts.
+	 */
+	void init();
+
+	/**
 	 * Create a new forces object for a boid.
 	 * 
 	 * @param b
@@ -60,7 +66,7 @@ public interface BoidForcesFactory {
 	 * @param maxz
 	 */
 	void resize(Point3 low, Point3 high);
-	
+
 	/**
 	 * Terminate all operations.
 	 */

@@ -32,6 +32,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,11 +46,12 @@ import org.graphstream.stream.file.FileSourceDGS;
 import org.graphstream.ui.swingViewer.Viewer;
 import org.graphstream.ui.swingViewer.util.Camera;
 import org.miv.pherd.geom.Point3;
+import org.miv.pherd.geom.Vector3;
 
 import java.util.Random;
 
 /**
- * Represents a boid simulation and their underlying interaction graph. 
+ * Represents a boid simulation and their underlying interaction graph.
  * 
  * @author Damien Olivier
  * @author Guilhelm Savin
@@ -58,7 +60,7 @@ import java.util.Random;
 public class BoidGraph extends AdjacencyListGraph {
 
 	public static enum Parameter {
-		MAX_STEPS, AREA, SLEEP_TIME, STORE_FORCES_ATTRIBUTES, NORMALIZE_MODE, RANDOM_SEED
+		MAX_STEPS, AREA, SLEEP_TIME, STORE_FORCES_ATTRIBUTES, NORMALIZE_MODE, RANDOM_SEED, FORCES_FACTORY
 	}
 
 	/**
@@ -123,12 +125,12 @@ public class BoidGraph extends AdjacencyListGraph {
 	 * Lower point in space.
 	 */
 	protected Point3 lowAnchor;
-	
+
 	/**
 	 * Higher point in space.
 	 */
 	protected Point3 highAnchor;
-	
+
 	/**
 	 * Listeners for boid-graph specific events.
 	 */
@@ -153,7 +155,8 @@ public class BoidGraph extends AdjacencyListGraph {
 		area = 1;
 		maxSteps = 0;
 		boidSpecies = new HashMap<String, BoidSpecies>();
-		forcesFactory = new NTreeForcesFactory(this);
+
+		setForcesFactory(new NTreeForcesFactory(this));
 	}
 
 	public BoidGraph(String dgsConfig) throws IOException {
@@ -207,8 +210,22 @@ public class BoidGraph extends AdjacencyListGraph {
 	public void setForcesFactory(BoidForcesFactory bff) {
 		if (forcesFactory != null)
 			forcesFactory.end();
-		
+
 		forcesFactory = bff;
+
+		for (Boid b : this.<Boid> getEachNode()) {
+			Point3 p = b.getPosition();
+			Vector3 d = b.getForces().getDirection();
+
+			b.setForces(bff.createNewForces(b));
+			b.setPosition(p.x, p.y, p.z);
+			b.getForces().getDirection().copy(d);
+		}
+
+		forcesFactory.init();
+
+		System.out.printf("forces factory is now %s\n", bff.getClass()
+				.getName());
 	}
 
 	public double getArea() {
@@ -217,7 +234,7 @@ public class BoidGraph extends AdjacencyListGraph {
 
 	public void setArea(double area) {
 		this.area = area;
-		
+
 		lowAnchor.set(-area, -area, -area);
 		highAnchor.set(area, area, area);
 
@@ -374,6 +391,55 @@ public class BoidGraph extends AdjacencyListGraph {
 		case RANDOM_SEED:
 			setRandomSeed(Long.parseLong(value));
 			break;
+		case FORCES_FACTORY:
+			Class<?> ffClass;
+			Object obj = null;
+
+			try {
+				ffClass = Class.forName(value);
+			} catch (ClassNotFoundException e) {
+				System.err
+						.printf("ForcesFactory class '%s' not found\n", value);
+				return;
+			}
+
+			try {
+				Constructor<?> c = ffClass.getConstructor(BoidGraph.class);
+				obj = c.newInstance(this);
+			} catch (SecurityException e) {
+				e.printStackTrace();
+			} catch (NoSuchMethodException e) {
+				System.err.printf("no constructor %s(BoidGraph) found.\n",
+						value);
+				System.err.printf("try to use default constructor.\n");
+
+				try {
+					obj = ffClass.newInstance();
+				} catch (Exception e1) {
+					e1.printStackTrace();
+				}
+			} catch (IllegalArgumentException e) {
+				e.printStackTrace();
+			} catch (InstantiationException e) {
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();
+			} catch (InvocationTargetException e) {
+				e.printStackTrace();
+			}
+
+			if (obj == null) {
+				System.err.printf("unable to create a %s forces factory\n",
+						value);
+				return;
+			}
+
+			if (obj instanceof BoidForcesFactory)
+				setForcesFactory((BoidForcesFactory) obj);
+			else
+				System.err.printf("%s is not a forces factory\n", value);
+
+			break;
 		}
 	}
 
@@ -407,8 +473,8 @@ public class BoidGraph extends AdjacencyListGraph {
 
 	public void step() {
 		stepBegins(step + 1);
-		
-		for(BoidGraphListener listener: listeners) {
+
+		for (BoidGraphListener listener : listeners) {
 			listener.step(step + 1);
 		}
 	}
@@ -438,10 +504,12 @@ public class BoidGraph extends AdjacencyListGraph {
 		} catch (InterruptedException e) {
 		}
 	}
-	
+
 	/**
 	 * Register a listener for boid specific events.
-	 * @param listener The listener to register.
+	 * 
+	 * @param listener
+	 *            The listener to register.
 	 */
 	public void addBoidGraphListener(BoidGraphListener listener) {
 		listeners.add(listener);
@@ -453,8 +521,8 @@ public class BoidGraph extends AdjacencyListGraph {
 		b.getSpecies().register(b);
 
 		super.addNodeCallback(node);
-		
-		for(BoidGraphListener listener: listeners) {
+
+		for (BoidGraphListener listener : listeners) {
 			listener.boidAdded(b);
 		}
 	}
@@ -465,8 +533,8 @@ public class BoidGraph extends AdjacencyListGraph {
 		b.getSpecies().unregister(b);
 
 		super.removeNodeCallback(node);
-		
-		for(BoidGraphListener listener: listeners) {
+
+		for (BoidGraphListener listener : listeners) {
 			listener.boidDeleted(b);
 		}
 	}

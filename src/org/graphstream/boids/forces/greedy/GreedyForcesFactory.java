@@ -44,6 +44,15 @@ public class GreedyForcesFactory implements BoidForcesFactory {
 	/*
 	 * (non-Javadoc)
 	 * 
+	 * @see org.graphstream.boids.BoidForcesFactory#init()
+	 */
+	public void init() {
+		// Nothing to do
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see
 	 * org.graphstream.boids.BoidForcesFactory#createNewForces(org.graphstream
 	 * .boids.Boid)
