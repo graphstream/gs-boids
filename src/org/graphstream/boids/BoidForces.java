@@ -28,15 +28,10 @@
  */
 package org.graphstream.boids;
 
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.Collection;
 
-import org.graphstream.boids.Boid.BoidParticle;
-import org.miv.pherd.Particle;
 import org.miv.pherd.geom.Point3;
 import org.miv.pherd.geom.Vector3;
-import org.miv.pherd.ntree.Cell;
 
 /**
  * Models the forces applied to a boid at each step.
@@ -84,16 +79,26 @@ public abstract class BoidForces {
 	 */
 	public int countRep;
 
+	protected Boid boid;
+
+	/**
+	 * Direction of the boid.
+	 */
+	protected Vector3 dir;
+
 	/**
 	 * Forces all set at zero.
 	 */
-	public BoidForces() {
+	public BoidForces(Boid b) {
 		barycenter = new Point3();
 		direction = new Vector3();
 		attraction = new Vector3();
 		repulsion = new Vector3();
 		countAtt = 0;
 		countRep = 0;
+		boid = b;
+		dir = new Vector3(((BoidGraph) b.getGraph()).getRandom().nextDouble(),
+				((BoidGraph) b.getGraph()).getRandom().nextDouble(), 0);
 	}
 
 	/**
@@ -106,22 +111,66 @@ public abstract class BoidForces {
 	 * @param startCell
 	 *            The start cell (usually the root cell of the n-tree).
 	 */
-	public abstract void compute(Boid source, Cell startCell);
+	public void compute() {
+		Collection<Boid> neigh;
+		BoidSpecies species = boid.getSpecies();
+		Vector3 dir = getDirection();
+		Vector3 rep = new Vector3();
+		Point3 nextPos = getNextPosition();
 
-	/**
-	 * Store each force vector as an attribute in the boid. This allows all
-	 * listeners to retrieve the force vectors. This is particularly useful for
-	 * the viewer for example. Each force is stored with the attribute name
-	 * "force&lt;number&gt;" where &lt;number&gt; is a number that starts at
-	 * zero.
-	 * 
-	 * @param boid
-	 *            The boid to modify.
-	 */
-	protected void store(BoidParticle boid) {
-		boid.setAttribute("force0", direction);
-		boid.setAttribute("force1", attraction);
-		boid.setAttribute("force2", repulsion);
+		barycenter.set(0, 0, 0);
+		direction.fill(0);
+		attraction.fill(0);
+		repulsion.fill(0);
+		countAtt = 0;
+		countRep = 0;
+
+		neigh = getNeighborhood();
+
+		for (Boid b : neigh) {
+			actionWithNeighboor(b, rep);
+		}
+
+		boid.checkNeighborhood(neigh.toArray(new Boid[neigh.size()]));
+
+		if (countAtt > 0) {
+			barycenter.scale(1f / countAtt, 1f / countAtt, 1f / countAtt);
+			direction.scalarDiv(countAtt);
+			attraction
+					.set(barycenter.x - boid.getPosition().x, barycenter.y
+							- boid.getPosition().y, barycenter.z
+							- boid.getPosition().z);
+		}
+
+		if (countRep > 0) {
+			repulsion.scalarDiv(countRep);
+		}
+
+		direction.scalarMult(species.getDirectionFactor());
+		attraction.scalarMult(species.getAttractionFactor());
+		repulsion.scalarMult(species.getRepulsionFactor());
+		dir.scalarMult(species.getInertia());
+
+		dir.add(direction);
+		dir.add(attraction);
+		dir.add(repulsion);
+
+		if (((BoidGraph) boid.getGraph()).isNormalizeMode()) {
+			double len = dir.normalize();
+			if (len <= species.getMinSpeed())
+				len = species.getMinSpeed();
+			else if (len >= species.getMaxSpeed())
+				len = species.getMaxSpeed();
+
+			dir.scalarMult(species.getSpeedFactor() * len);
+		} else {
+			dir.scalarMult(species.getSpeedFactor());
+		}
+
+		checkWalls();
+		nextPos.move(dir);
+
+		boid.setAttribute("xyz", nextPos.x, nextPos.y, nextPos.z);
 	}
 
 	/**
@@ -156,264 +205,151 @@ public abstract class BoidForces {
 	}
 
 	/**
-	 * Is the another point is space in the field of view?
-	 */
-	public abstract boolean isVisible(BoidParticle boid, Point3 other);
-
-	/**
-	 * A basic definition of forces for a boid.
+	 * A boid particle p2 that is visible by p1 as been found, integrate it in
+	 * the forces that apply to the boid p1.
 	 * 
-	 * <p>
-	 * The kind of forces exercising on a boid can be changed to either use a
-	 * n-tree or not, or to account for other kind of forces or another force
-	 * model. This is the default force system that matches the basic boid
-	 * definition as defined by Craig Reynolds.
-	 * </p>
-	 * 
-	 * @author Guilhelm Savin
-	 * @author Antoine Dutot
+	 * @param p1
+	 *            The source boid.
+	 * @param b
+	 *            the boid visible by p1.
+	 * @param rep
+	 *            The repulsion to compute.
 	 */
-	public static class BasicForces extends BoidForces {
-		@Override
-		public void compute(Boid source, Cell startCell) {
-			barycenter.set(0, 0, 0);
-			direction.fill(0);
-			attraction.fill(0);
-			repulsion.fill(0);
-			countAtt = 0;
-			countRep = 0;
+	protected void actionWithNeighboor(Boid b, Vector3 rep) {
+		Point3 p1 = boid.getPosition();
+		Point3 p2 = b.getPosition();
+		BoidSpecies p1Species = boid.getSpecies();
+		BoidSpecies p2Species = b.getSpecies();
+		double v = boid.getSpecies().getViewZone();
 
-			Set<BoidParticle> contacts = new HashSet<BoidParticle>();
+		rep.set(p1.x - p2.x, p1.y - p2.y, p1.z - p2.z);
 
-			exploreTree(source, startCell, contacts);
+		double len = rep.length();
 
-			source.checkNeighborhood(contacts.toArray(new BoidParticle[contacts
-					.size()]));
-
-			if (countAtt > 0) {
-				barycenter.scale(1f / countAtt, 1f / countAtt, 1f / countAtt);
-				direction.scalarDiv(countAtt);
-				attraction.set(barycenter.x - source.getPosition().x,
-						barycenter.y - source.getPosition().y, barycenter.z
-								- source.getPosition().z);
-			}
-
-			if (countRep > 0) {
-				repulsion.scalarDiv(countRep);
-			}
+		if (len != 0) {
+			if (p1Species != p2Species)
+				rep.scalarMult(1 / (len * len) * p2Species.getFearFactor());
+			else
+				rep.scalarMult(1 / (len * len));
 		}
 
-		/**
-		 * Recursively explore the n-tree to search for intersection cells, and
-		 * the visible boids.
-		 * 
-		 * @param source
-		 *            The boid the forces are computed on.
-		 * @param cell
-		 *            The cell to explore recursively.
-		 */
-		protected void exploreTree(Boid source, Cell cell,
-				Set<BoidParticle> contacts) {
-			if (intersection(source, cell)) {
-				if (cell.isLeaf()) {
-					forcesFromCell(source.getParticle(), cell, contacts);
-				} else {
-					int n = cell.getSpace().getDivisions();
+		double a = Math.log(Math.min(len, v)) / Math.log(v);
+		rep.scalarMult(a);
 
-					for (int i = 0; i < n; ++i)
-						exploreTree(source, cell.getSub(i), contacts);
-				}
-			}
-		}
+		repulsion.add(rep);
+		countRep++;
 
-		/**
-		 * A leaf cell has been found that is in intersection with the boid
-		 * area, computes the forces from this cell.
-		 * 
-		 * @param source
-		 *            The boid the forces are computed on.
-		 * @param cell
-		 *            The cell.
-		 */
-		protected void forcesFromCell(BoidParticle source, Cell cell,
-				Set<BoidParticle> contacts) {
-			// BoidCellData data = (BoidCellData) cell.getData();
-			Iterator<? extends Particle> particles = cell.getParticles();
-			Vector3 rep = new Vector3();
-			// LinkedList<BoidParticle> contacts = null;
-
-			while (particles.hasNext()) {
-				Particle particle = particles.next();
-
-				if (particle instanceof BoidParticle) {
-					// if (contacts == null)
-					// contacts = new LinkedList<BoidParticle>();
-
-					if (source != particle
-							&& isVisible(source, particle.getPosition())) {
-						contacts.add((BoidParticle) particle);
-						actionWithNeighboor(source, (BoidParticle) particle,
-								rep);
-					}
-				}
-			}
-
-			// barycenter.move( data.getCenter() );
-			// direction.add( data.getDirection() );
-		}
-
-		/**
-		 * A rectangular intersection function, is the boid view area
-		 * intersecting the given cell?. This provides a quick lookup function
-		 * to test if a cell must be explored or not. Later, a better test
-		 * according to a spherical view zone will be done.
-		 * 
-		 * @param cell
-		 *            The cell to test for intersection with the boid
-		 *            rectangular view area.
-		 * @return True if there is an intersection.
-		 */
-		protected boolean intersection(Boid source, Cell cell) {
-			double x1 = cell.getSpace().getLoAnchor().x;
-			double y1 = cell.getSpace().getLoAnchor().y;
-			double z1 = cell.getSpace().getLoAnchor().z;
-			double x2 = cell.getSpace().getHiAnchor().x;
-			double y2 = cell.getSpace().getHiAnchor().y;
-			double z2 = cell.getSpace().getHiAnchor().z;
-
-			double X1 = source.getPosition().x - source.getSpecies().viewZone;
-			double Y1 = source.getPosition().y - source.getSpecies().viewZone;
-			double Z1 = source.getPosition().z - source.getSpecies().viewZone;
-			double X2 = source.getPosition().x + source.getSpecies().viewZone;
-			double Y2 = source.getPosition().y + source.getSpecies().viewZone;
-			double Z2 = source.getPosition().z + source.getSpecies().viewZone;
-
-			// Only when the area is before or after the cell there cannot
-			// exist an intersection (case a and b). Else there must be an
-			// intersection (cases c, d, e and f).
-			//
-			// |-a-| +---------+ |-b-|
-			// | |
-			// |-c-| |-d-|
-			// | |
-			// | |-e-| |
-			// | |
-			// |-+----f----+-|
-			// | |
-			// +---------+
-
-			if (X2 < x1 || X1 > x2)
-				return false;
-
-			if (Y2 < y1 || Y1 > y2)
-				return false;
-
-			if (Z2 < z1 || Z1 > z2)
-				return false;
-
-			return true;
-		}
-
-		/**
-		 * True if the given position is visible by the boid.
-		 * 
-		 * <p>
-		 * This method first check if the given point is under the max distance
-		 * of view. If so, it checks if the point is in the angle of view. The
-		 * angle of view is specified as the cosine of the angle between the
-		 * boid direction vector and the vector between the boid and the given
-		 * point. This means that -1 is equal to a 360 degree of vision (the
-		 * angle of view test is deactivated in this case), 0 means 180 degree
-		 * angle, and 0.5 a 90 degree angle for example.
-		 * </p>
-		 * 
-		 * @param source
-		 *            The source boid.
-		 * @param point
-		 *            The point to consider.
-		 * 
-		 * @return True if point is visible by source.
-		 */
-		@Override
-		public boolean isVisible(BoidParticle source, Point3 point) {
-			// Check both the distance and angle of view according to the
-			// direction
-			// of the source.
-
-			BoidSpecies species = source.getBoid().getSpecies();
-
-			Point3 pos = source.getPosition();
-			double d = pos.distance(point);
-
-			// At good distance.
-			if (d <= species.viewZone) {
-				// If there is an angle of view.
-				if (species.angleOfView > -1) {
-					Vector3 dir = new Vector3(source.dir);
-					Vector3 light = new Vector3(point.x - pos.x, point.y
-							- pos.y, point.z - pos.z);// (pos.x - point.x, pos.y
-					// - point.y, pos.z -
-					// point.z);
-
-					dir.normalize();
-					light.normalize();
-
-					double angle = dir.dotProduct(light);
-
-					// In the field of view.
-					if (angle > species.angleOfView)
-						return true;
-				} else {
-					return true;
-				}
-			}
-
-			// Not in view.
-			return false;
-		}
-
-		/**
-		 * A boid particle p2 that is visible by p1 as been found, integrate it
-		 * in the forces that apply to the boid p1.
-		 * 
-		 * @param p1
-		 *            The source boid.
-		 * @param p2
-		 *            the boid visible by p1.
-		 * @param rep
-		 *            The repulsion to compute.
-		 */
-		protected void actionWithNeighboor(BoidParticle p1, BoidParticle p2,
-				Vector3 rep) {
-			Point3 pp = p2.getPosition();
-			BoidSpecies p1Species = p1.getBoid().getSpecies();
-			BoidSpecies p2Species = p2.getBoid().getSpecies();
-			double v = p1.getBoid().getSpecies().viewZone;
-
-			rep.set(p1.getPosition().x - pp.x, p1.getPosition().y - pp.y, p1
-					.getPosition().z
-					- pp.z);
-
-			double len = rep.length();
-
-			if (len != 0) {
-				if (p1Species != p2Species)
-					rep.scalarMult(1 / (len * len) * p2Species.getFearFactor());
-				else
-					rep.scalarMult(1 / (len * len));
-			}
-
-			double a = Math.log(Math.min(len, v)) / Math.log(v);
-			rep.scalarMult(a);
-
-			repulsion.add(rep);
-			countRep++;
-
-			if (p1Species == p2Species) {
-				barycenter.move(pp);
-				direction.add(p2.dir);
-				countAtt++;
-			}
+		if (p1Species == p2Species) {
+			barycenter.move(p2);
+			direction.add(b.getForces().getDirection());
+			countAtt++;
 		}
 	}
+
+	/**
+	 * Check the boid does not go out of the space walls.
+	 */
+	protected void checkWalls() {
+		float aarea = 0.000001f;
+		Point3 lo = ((BoidGraph) boid.getGraph()).getLowAnchor();
+		Point3 hi = ((BoidGraph) boid.getGraph()).getHighAnchor();
+		Point3 nextPos = getNextPosition();
+
+		if (nextPos.x + dir.data[0] <= lo.x + aarea) {
+			nextPos.x = lo.x + aarea;
+			dir.data[0] = -dir.data[0];
+		} else if (nextPos.x + dir.data[0] >= hi.x - aarea) {
+			nextPos.x = hi.x - aarea;
+			dir.data[0] = -dir.data[0];
+		}
+		if (nextPos.y + dir.data[1] <= lo.y + aarea) {
+			nextPos.y = lo.y + aarea;
+			dir.data[1] = -dir.data[1];
+		} else if (nextPos.y + dir.data[1] >= hi.y - aarea) {
+			nextPos.y = hi.y - aarea;
+			dir.data[1] = -dir.data[1];
+		}
+		if (nextPos.z + dir.data[2] <= lo.z + aarea) {
+			nextPos.z = lo.z + aarea;
+			dir.data[2] = -dir.data[2];
+		} else if (nextPos.z + dir.data[2] >= hi.z - aarea) {
+			nextPos.z = hi.z - aarea;
+			dir.data[2] = -dir.data[2];
+		}
+	}
+
+	/**
+	 * True if the given position is visible by the boid.
+	 * 
+	 * <p>
+	 * This method first check if the given point is under the max distance of
+	 * view. If so, it checks if the point is in the angle of view. The angle of
+	 * view is specified as the cosine of the angle between the boid direction
+	 * vector and the vector between the boid and the given point. This means
+	 * that -1 is equal to a 360 degree of vision (the angle of view test is
+	 * deactivated in this case), 0 means 180 degree angle, and 0.5 a 90 degree
+	 * angle for example.
+	 * </p>
+	 * 
+	 * @param source
+	 *            The source boid.
+	 * @param point
+	 *            The point to consider.
+	 * 
+	 * @return True if point is visible by source.
+	 */
+	public boolean isVisible(Boid boid, Point3 point) {
+		//
+		// Check both the distance and angle of view according to the
+		// direction
+		// of the source.
+		//
+		BoidSpecies species = boid.getSpecies();
+
+		Point3 pos = boid.getPosition();
+		double d = pos.distance(point);
+
+		// At good distance.
+		if (d <= species.getViewZone()) {
+			//
+			// If there is an angle of view.
+			//
+			if (species.getAngleOfView() > -1) {
+				double angle;
+				Vector3 dir = new Vector3(boid.getForces().getDirection());
+				Vector3 light = new Vector3(point.x - pos.x, point.y - pos.y,
+						point.z - pos.z);
+
+				dir.normalize();
+				light.normalize();
+
+				angle = dir.dotProduct(light);
+
+				//
+				// In the field of view.
+				//
+				if (angle > species.getAngleOfView())
+					return true;
+			} else {
+				return true;
+			}
+		}
+
+		//
+		// Not in view.
+		//
+		return false;
+	}
+
+	public Vector3 getDirection() {
+		return dir;
+	}
+
+	public abstract void setPosition(double x, double y, double z);
+
+	public abstract Point3 getPosition();
+
+	public abstract Point3 getNextPosition();
+
+	public abstract Collection<Boid> getNeighborhood();
 }

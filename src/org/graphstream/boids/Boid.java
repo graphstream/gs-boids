@@ -33,9 +33,7 @@ import java.util.LinkedList;
 
 import org.graphstream.graph.implementations.AbstractGraph;
 import org.graphstream.graph.implementations.AdjacencyListNode;
-import org.miv.pherd.Particle;
 import org.miv.pherd.geom.Point3;
-import org.miv.pherd.geom.Vector3;
 
 /**
  * Represents a single bird-oid object.
@@ -62,7 +60,6 @@ import org.miv.pherd.geom.Vector3;
 public class Boid extends AdjacencyListNode {
 
 	protected final BoidSpecies species;
-	protected BoidParticle particle;
 
 	/** Parameters of this group of boids. */
 
@@ -80,23 +77,22 @@ public class Boid extends AdjacencyListNode {
 	public Boid(AbstractGraph graph, BoidSpecies species, String id) {
 		super(graph, id);
 
-		this.particle = new BoidParticle((BoidGraph) graph);
 		this.species = species;
-		this.forces = getDefaultForces();
+		this.forces = null;
 	}
 
 	/**
 	 * Force the position of the boid in space.
 	 */
 	public void setPosition(double x, double y, double z) {
-		particle.setPosition(x, y, z);
+		forces.setPosition(x, y, z);
 	}
 
 	/**
 	 * Actual position of the boid in space.
 	 */
 	public Point3 getPosition() {
-		return particle.getPosition();
+		return forces.getPosition();
 	}
 
 	/**
@@ -106,23 +102,16 @@ public class Boid extends AdjacencyListNode {
 		return species;
 	}
 
-	/**
-	 * The underlying particle of the force system this boids is linked to.
-	 */
-	public BoidParticle getParticle() {
-		return particle;
+	public void setForces(BoidForces forces) {
+		this.forces = forces;
 	}
 
-	/**
-	 * The forces acting on the boids, this is a set of vectors and parameters
-	 * computed at each time step.
-	 */
-	public BoidForces getDefaultForces() {
-		return new BoidForces.BasicForces();
+	public BoidForces getForces() {
+		return forces;
 	}
 
-	protected void checkNeighborhood(BoidParticle... particles) {
-		if (particles != null) {
+	public void checkNeighborhood(Boid... boids) {
+		if (boids != null) {
 			Iterator<Boid> it = getNeighborNodeIterator();
 			LinkedList<Boid> toRemove = null;
 
@@ -130,14 +119,14 @@ public class Boid extends AdjacencyListNode {
 				boolean found = false;
 				Boid b = it.next();
 
-				for (BoidParticle p : particles) {
-					if (p.getId().equals(b.getParticle().getId())) {
+				for (Boid b2 : boids) {
+					if (b == b2) {
 						found = true;
 						break;
 					}
 				}
 
-				if (!found && !forces.isVisible(b.particle, this.getPosition())) {
+				if (!found && !forces.isVisible(b, this.getPosition())) {
 					if (toRemove == null)
 						toRemove = new LinkedList<Boid>();
 
@@ -152,12 +141,14 @@ public class Boid extends AdjacencyListNode {
 				toRemove.clear();
 				toRemove = null;
 			}
-			for (BoidParticle p : particles) {
-				if (getEdgeBetween(p.getBoid().getId()) == null) {
-					getGraph().addEdge(getEdgeId(this, p.getBoid()), getId(),
-							p.getBoid().getId());
-				}
+
+			for (Boid b2 : boids) {
+				if (getEdgeBetween(b2) == null)
+					getGraph().addEdge(getEdgeId(this, b2), this, b2);
 			}
+		} else {
+			while (getDegree() > 0)
+				getGraph().removeEdge(getEdge(0));
 		}
 	}
 
@@ -175,141 +166,5 @@ public class Boid extends AdjacencyListNode {
 		}
 
 		return String.format("%s--%s", b1.getId(), b2.getId());
-	}
-
-	/**
-	 * Internal representation of the boid position, and direction in the forces
-	 * system.
-	 * 
-	 * @author Guilhelm Savin
-	 * @author Antoine Dutot
-	 */
-	class BoidParticle extends Particle {
-		/**
-		 * Direction of the boid.
-		 */
-		protected Vector3 dir;
-
-		/**
-		 * Set of global parameters.
-		 */
-		protected BoidGraph ctx;
-
-		/**
-		 * Number of boids in view at each step.
-		 */
-		protected int contacts = 0;
-
-		/**
-		 * Number of boids of my group in view at each step.
-		 */
-		protected int mySpeciesContacts = 0;
-
-		/**
-		 * New particle.
-		 * 
-		 * @param ctx
-		 *            The set of global parameters.
-		 */
-		public BoidParticle(BoidGraph ctx) {
-			super(Boid.this.getId(), ctx.random.nextDouble() * (ctx.area * 2)
-					- ctx.area, ctx.random.nextDouble() * (ctx.area * 2)
-					- ctx.area, 0);
-
-			this.dir = new Vector3(ctx.random.nextDouble(), ctx.random
-					.nextDouble(), 0);
-			this.ctx = ctx;
-		}
-
-		@Override
-		public void move(int time) {
-			contacts = 0;
-			mySpeciesContacts = 0;
-
-			forces.compute(Boid.this, cell.getTree().getRootCell());
-
-			forces.direction.scalarMult(species.directionFactor);
-			forces.attraction.scalarMult(species.attractionFactor);
-			forces.repulsion.scalarMult(species.repulsionFactor);
-			dir.scalarMult(species.inertia);
-
-			dir.add(forces.direction);
-			dir.add(forces.attraction);
-			dir.add(forces.repulsion);
-
-			if (ctx.normalizeMode) {
-				double len = dir.normalize();
-				if (len <= species.minSpeed)
-					len = species.minSpeed;
-				else if (len >= species.maxSpeed)
-					len = species.maxSpeed;
-
-				dir.scalarMult(species.speedFactor * len);
-			} else {
-				dir.scalarMult(species.speedFactor);
-			}
-
-			if (ctx.storeForcesAttributes)
-				forces.store(this);
-
-			checkWalls();
-			nextPos.move(dir);
-
-			Boid.this.setAttribute("xyz", pos.x, pos.y, pos.z);
-
-			moved = true;
-		}
-
-		@Override
-		public void inserted() {
-		}
-
-		@Override
-		public void removed() {
-		}
-
-		public Boid getBoid() {
-			return Boid.this;
-		}
-
-		public void setPosition(double x, double y, double z) {
-			initPos(x, y, z);
-		}
-
-		/**
-		 * Check the boid does not go out of the space walls.
-		 */
-		protected void checkWalls() {
-			// /float area = ctx.area;
-			float aarea = 0.000001f;
-
-			if (nextPos.x + dir.data[0] <= ctx.getSpace().getLoAnchor().x
-					+ aarea) {
-				nextPos.x = ctx.getSpace().getLoAnchor().x + aarea;
-				dir.data[0] = -dir.data[0];
-			} else if (nextPos.x + dir.data[0] >= ctx.getSpace().getHiAnchor().x
-					- aarea) {
-				nextPos.x = ctx.getSpace().getHiAnchor().x - aarea;
-				dir.data[0] = -dir.data[0];
-			}
-			if (nextPos.y + dir.data[1] <= ctx.getSpace().getLoAnchor().y
-					+ aarea) {
-				nextPos.y = ctx.getSpace().getLoAnchor().y + aarea;
-				dir.data[1] = -dir.data[1];
-			} else if (nextPos.y + dir.data[1] >= ctx.getSpace().getHiAnchor().y
-					- aarea) {
-				nextPos.y = ctx.getSpace().getHiAnchor().y - aarea;
-				dir.data[1] = -dir.data[1];
-			}
-			if (nextPos.z + dir.data[2] <= ctx.getSpace().getLoAnchor().z
-					+ aarea) {
-				nextPos.z = ctx.getSpace().getLoAnchor().z + aarea;
-				dir.data[2] = -dir.data[2];
-			} else if (nextPos.z + dir.data[2] >= ctx.getSpace().getHiAnchor().z
-					- aarea) {
-				nextPos.z = ctx.getSpace().getHiAnchor().z - aarea;
-				dir.data[2] = -dir.data[2];
-			}
-		}
 	}
 }

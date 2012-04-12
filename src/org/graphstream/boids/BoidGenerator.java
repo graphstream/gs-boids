@@ -113,8 +113,8 @@ public class BoidGenerator extends SourceBase implements Generator {
 	 */
 	public void end() {
 		ctx.clearSinks();
-
-		ctx.pbox.removeAllParticles();
+		ctx.clear();
+		
 		ctx = null;
 	}
 

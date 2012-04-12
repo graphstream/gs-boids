@@ -26,11 +26,10 @@
  * The fact that you are presently reading this means that you have had
  * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
  */
-package org.graphstream.boids;
+package org.graphstream.boids.forces.ntree;
 
 import java.util.Iterator;
 
-import org.graphstream.boids.Boid.BoidParticle;
 import org.miv.pherd.Particle;
 import org.miv.pherd.geom.Vector3;
 import org.miv.pherd.ntree.BarycenterCellData;
@@ -98,7 +97,7 @@ public class BoidCellData extends BarycenterCellData {
 					y += particle.getPosition().y;
 					z += particle.getPosition().z;
 
-					dir.add(particle.dir);
+					dir.add(particle.b.getForces().getDirection());
 
 					n++;
 				}
