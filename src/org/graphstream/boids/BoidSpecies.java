@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import org.graphstream.boids.BoidGraph;
+import org.graphstream.graph.Node;
 
 /**
  * Parameters for each boids species.
@@ -143,12 +144,17 @@ public class BoidSpecies implements Iterable<Boid> {
 	/**
 	 * Allow to create unique identifiers for boids.
 	 */
-	private int currentIndex = 0;
+	protected int currentIndex = 0;
 	
 	/**
 	 * Allow to create unique identifiers for boids.
 	 */
-	private long timestamp = System.nanoTime();
+	protected long timestamp = System.nanoTime();
+	
+	/**
+	 * Handle the addition or removal of boids.
+	 */
+	protected DemographicManager pop; 
 
 	/**
 	 * New default species with a random color.
@@ -177,6 +183,7 @@ public class BoidSpecies implements Iterable<Boid> {
 		inertia = 1.1f;
 		fearFactor = 1;
 		addSpeciesNameInUIClass = true;
+		pop = new DemographicManager.SpeciesDemographicManager(this, ctx, new Probability.ConstantProbability(0.01), new Probability.ConstantProbability(0.01));
 
 		this.color = new Color(ctx.random.nextFloat(), ctx.random.nextFloat(),
 				ctx.random.nextFloat());
@@ -325,10 +332,11 @@ public class BoidSpecies implements Iterable<Boid> {
 	/**
 	 * This method is called by {@link org.graphstream.boids.BoidGraph} at the
 	 * end of each step. It can be used by sub-classes to add some code.
+     * @param time The current boid graph time.
 	 */
-	public void terminateLoop() {
-		// Do nothing.
-		// Can be used by extending classes.
+	public void terminateStep(double time) {
+System.err.printf("## pop for %s%n", getName());
+		pop.step(time);
 	}
 
 	/**
@@ -568,7 +576,41 @@ public class BoidSpecies implements Iterable<Boid> {
 	public void setAngleOfView(double aov) {
 		angleOfView = aov;
 	}
-
+	
+	/**
+	 * The probability that a boids clones itself.
+	 * @param probability A probability instance.
+	 */
+	public void setReproductionProbability(Probability probability) {
+		pop.setReproduceCondition(probability);
+	}
+	
+	/**
+	 * The probability that a boids die.
+	 * @param probability A probability instance.
+	 */
+	public void setDeathCondition(Probability probability) {
+		pop.setDeathProbability(probability);
+	}
+	
+	/**
+	 * Unregister this species from the boids graph.
+	 * 
+	 * This removes all boids pertaining to this species, and release the link with the graph.
+	 */
+	public void release() {
+		pop.release();
+		
+		Iterator<Node> i = ctx.getNodeIterator();
+		
+		while(i.hasNext()) {
+			Boid b = (Boid) i.next();
+			if(b.getSpecies() == this) {
+				i.remove();
+			}
+		}
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 

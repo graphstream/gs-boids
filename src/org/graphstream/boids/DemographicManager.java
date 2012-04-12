@@ -154,7 +154,7 @@ public class DemographicManager implements BoidGraphListener {
 			b = futureParents.poll();
 			
 			String id = b.getSpecies().createNewId();
-			
+System.err.printf("  -> adding boid %s%n", id);
 			ctx.addNode(id);
 //			ctx.addBoid(b.getSpecies(), b.getPosition().x, b.getPosition().y, b
 //					.getPosition().z);
@@ -181,6 +181,8 @@ public class DemographicManager implements BoidGraphListener {
 			}
 		}
 
+System.err.printf("Preparing to remove %d boids and add %d boids.%n", toRemove.size(), futureParents.size());
+		
 		makeLove();
 		killAll();
 
@@ -199,8 +201,15 @@ public class DemographicManager implements BoidGraphListener {
 	 * Call this method after each step of boid computation, to add or remove boids according to
 	 * reproduction rules. 
 	 */
-	public void step(int time) {
+	public void step(double time) {
 		check();
+	}
+	
+	/**
+	 * Release this manager, and remove as a listener for the graph.
+	 */
+	public void release() {
+		ctx.removeBoidGraphListener(this);
 	}
 
 	/**

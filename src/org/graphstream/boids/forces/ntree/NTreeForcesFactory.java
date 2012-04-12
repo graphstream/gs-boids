@@ -166,7 +166,7 @@ public class NTreeForcesFactory implements BoidForcesFactory, ElementSink {
 	 */
 	public void nodeRemoved(String sourceId, long timeId, String nodeId) {
 		Boid b = ctx.getNode(nodeId);
-		pbox.removeParticle(((NTreeForces) b.getForces()).p);
+		pbox.removeParticle(((NTreeForces) b.getForces()).p.getId());
 	}
 
 	/*

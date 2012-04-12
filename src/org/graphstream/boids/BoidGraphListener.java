@@ -44,7 +44,7 @@ public interface BoidGraphListener {
 	 * forces model.
 	 * @param time The current iteration time.
 	 */
-	void step(int time);
+	void step(double time);
 
 	/** 
 	 * One boid was added.

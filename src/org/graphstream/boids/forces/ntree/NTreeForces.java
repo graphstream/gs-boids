@@ -65,6 +65,7 @@ public class NTreeForces extends BoidForces {
 	 * 
 	 * @see org.graphstream.boids.BoidForces#getPosition()
 	 */
+	@Override
 	public Point3 getPosition() {
 		return p.getPosition();
 	}
@@ -74,6 +75,7 @@ public class NTreeForces extends BoidForces {
 	 * 
 	 * @see org.graphstream.boids.BoidForces#setPosition(double, double, double)
 	 */
+	@Override
 	public void setPosition(double x, double y, double z) {
 		p.setPosition(x, y, z);
 	}
@@ -83,6 +85,7 @@ public class NTreeForces extends BoidForces {
 	 * 
 	 * @see org.graphstream.boids.BoidForces#getNextPosition()
 	 */
+	@Override
 	public Point3 getNextPosition() {
 		return p.getNextPosition();
 	}
@@ -91,10 +94,10 @@ public class NTreeForces extends BoidForces {
 	 * Recursively explore the n-tree to search for intersection cells, and the
 	 * visible boids.
 	 * 
-	 * @param source
-	 *            The boid the forces are computed on.
 	 * @param cell
 	 *            The cell to explore recursively.
+	 * @param contacts
+	 *            The set of visible boids to build by exploration.
 	 */
 	protected void exploreTree(Cell cell, Set<Boid> contacts) {
 		if (intersection(boid, cell)) {
@@ -113,10 +116,10 @@ public class NTreeForces extends BoidForces {
 	 * A leaf cell has been found that is in intersection with the boid area,
 	 * computes the forces from this cell.
 	 * 
-	 * @param source
-	 *            The boid the forces are computed on.
 	 * @param cell
 	 *            The cell.
+	 * @param contacts
+	 *            The set of visible boids to build by exploration.
 	 */
 	protected void forcesFromCell(Cell cell, Set<Boid> contacts) {
 		Iterator<? extends Particle> particles = cell.getParticles();
@@ -190,6 +193,7 @@ public class NTreeForces extends BoidForces {
 	 * 
 	 * @see org.graphstream.boids.BoidForces#getNeighborhood()
 	 */
+	@Override
 	public Collection<Boid> getNeighborhood() {
 		HashSet<Boid> neigh = new HashSet<Boid>();
 		Cell startCell = p.getCell().getTree().getRootCell();

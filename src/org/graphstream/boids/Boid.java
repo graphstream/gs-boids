@@ -109,6 +109,11 @@ public class Boid extends AdjacencyListNode {
 	}
 
 	public void checkNeighborhood(Boid... boids) {
+		if(getGraph().getNode(getId()) == null) {
+			System.err.printf("I do not exist any more !!!%n");
+			return;
+		}
+		
 		if (boids != null) {
 			Iterator<Boid> it = getNeighborNodeIterator();
 			LinkedList<Boid> toRemove = null;
@@ -141,8 +146,11 @@ public class Boid extends AdjacencyListNode {
 			}
 
 			for (Boid b2 : boids) {
-				if (getEdgeBetween(b2) == null)
-					getGraph().addEdge(getEdgeId(this, b2), this, b2);
+				if (getEdgeBetween(b2) == null) {
+					if(getGraph().getNode(b2.getId())!= null)
+					     getGraph().addEdge(getEdgeId(this, b2), this, b2);
+					else System.err.printf("%s does not exists !!%n", b2.getId());
+				}	
 			}
 		} else {
 			while (getDegree() > 0)

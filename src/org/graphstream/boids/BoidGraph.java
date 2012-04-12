@@ -135,9 +135,11 @@ public class BoidGraph extends AdjacencyListGraph {
 	 * Listeners for boid-graph specific events.
 	 */
 	protected ArrayList<BoidGraphListener> listeners = new ArrayList<BoidGraphListener>();
-
+	
 	/**
-	 * New context.
+	 * New boids simulation represented as an interaction graph.
+	 * 
+	 * <p>All parameters are set to defaults.</p>
 	 */
 	public BoidGraph() {
 		super("boids-context");
@@ -159,6 +161,14 @@ public class BoidGraph extends AdjacencyListGraph {
 		setForcesFactory(new NTreeForcesFactory(this));
 	}
 
+	/**
+	 * New boids simulation represented as an interaction graph.
+	 * 
+	 * <p>This pre-load a configuration from a DGS file.</p>
+	 * 
+	 * @param dgsConfig The initial configuration in DGS format.
+	 * @throws IOException If the DGS cannot be read.
+	 */
 	public BoidGraph(String dgsConfig) throws IOException {
 		this();
 		loadDGSConfiguration(dgsConfig);
@@ -207,6 +217,10 @@ public class BoidGraph extends AdjacencyListGraph {
 		config.removeSink(this);
 	}
 
+	/**
+	 * Set the factory used to instantiate the force system to use.
+	 * @param bff The force system factory.
+	 */
 	public void setForcesFactory(BoidForcesFactory bff) {
 		if (forcesFactory != null)
 			forcesFactory.end();
@@ -290,15 +304,19 @@ public class BoidGraph extends AdjacencyListGraph {
 		this.maxSteps = maxSteps;
 	}
 
+	/**
+	 * The random number generator used.
+	 * @return The random number generator.
+	 */
 	public Random getRandom() {
 		return random;
 	}
 
-	public BoidSpecies getOrCreateSpecies(String name) {
+	protected BoidSpecies getOrCreateSpecies(String name) {
 		return getOrCreateSpecies(name, null);
 	}
 
-	public BoidSpecies getOrCreateSpecies(String name, String clazz) {
+	protected BoidSpecies getOrCreateSpecies(String name, String clazz) {
 		BoidSpecies species = boidSpecies.get(name);
 
 		if (species == null) {
@@ -342,25 +360,54 @@ public class BoidGraph extends AdjacencyListGraph {
 		return species;
 	}
 
+	/**
+	 * The species with the given name.
+	 * @param name The species name.
+	 * @return The corresponding species or null if not found.
+	 */
 	public BoidSpecies getSpecies(String name) {
 		return boidSpecies.get(name);
 	}
 
+	/**
+	 * The number of boid species actually.
+	 * @return The number of boid species.
+	 */
 	public int getSpeciesCount() {
 		return boidSpecies.size();
 	}
 
+	/**
+	 * The species whose name is "default".
+	 * @return The default species.
+	 */
 	public BoidSpecies getDefaultSpecies() {
 		return getSpecies("default");
 	}
 
+	/**
+	 * Add a species with name "default" if does not yet exists.
+	 * @return The created default species or the old one if it was already present. 
+	 */
 	public BoidSpecies addDefaultSpecies() {
 		return getOrCreateSpecies("default");
 	}
 
+	/**
+	 * Remove a species.
+	 * 
+	 * This also removed all the boids of this species. You cannot remove the "default" species.
+	 * 
+	 * @param name The species name.
+	 */
 	public void deleteSpecies(String name) {
-		if (!name.equals("default"))
-			boidSpecies.remove(name);
+		if (!name.equals("default")) {
+			BoidSpecies species = boidSpecies.get(name);
+			if(species != null) {
+				species.release();
+				boidSpecies.remove(name);
+			}
+		}
 	}
 
 	// Commands
@@ -457,32 +504,32 @@ public class BoidGraph extends AdjacencyListGraph {
 		loop = true;
 
 		while (loop) {
-			stepBegins(step);
-
-			for (BoidSpecies sp : boidSpecies.values())
-				sp.terminateLoop();
-
-			sleep(sleepTime);
-
-			step++;
+			step();
 
 			if (maxSteps > 0 && step > maxSteps)
 				loop = false;
+
+			sleep(sleepTime);
 		}
 	}
 
 	public void step() {
-		stepBegins(step + 1);
-
-		for (BoidGraphListener listener : listeners) {
-			listener.step(step + 1);
-		}
+		step++;
+		stepBegins(step);
 	}
 
 	@Override
 	public void stepBegins(double step) {
-		super.stepBegins(step);
+		for (BoidSpecies sp : boidSpecies.values()) {
+			sp.terminateStep(step);
+		}
+		for (BoidGraphListener listener : listeners) {
+			listener.step(step);
+		}
+
 		forcesFactory.step();
+		
+		super.stepBegins(step);
 	}
 
 	public boolean isLooping() {
@@ -513,6 +560,17 @@ public class BoidGraph extends AdjacencyListGraph {
 	 */
 	public void addBoidGraphListener(BoidGraphListener listener) {
 		listeners.add(listener);
+	}
+	
+	/**
+	 * Unregister a listener for boid specific events.
+	 * @param listener The listener to remove.
+	 */
+	public void removeBoidGraphListener(BoidGraphListener listener) {
+		int index = listeners.indexOf(listener);
+		if(index >= 0) {
+			listeners.remove(index);
+		}
 	}
 
 	@Override
