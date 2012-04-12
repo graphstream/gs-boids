@@ -538,7 +538,7 @@ public class BoidGraph extends AdjacencyListGraph {
 
 		try {
 			ctx.loadDGSConfiguration(BoidGraph.class
-					.getResourceAsStream("configExample.dgs"));
+					.getResourceAsStream("configExampleWithTwoSpecies.dgs"));
 		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
