@@ -135,9 +135,19 @@ public class BoidSpecies implements Iterable<Boid> {
 	 */
 	protected HashMap<String, Boid> boids;
 
+	/**
+	 * Specify a CSS class for the species name for the GraphStream viewer. 
+	 */
 	protected boolean addSpeciesNameInUIClass;
 
+	/**
+	 * Allow to create unique identifiers for boids.
+	 */
 	private int currentIndex = 0;
+	
+	/**
+	 * Allow to create unique identifiers for boids.
+	 */
 	private long timestamp = System.nanoTime();
 
 	/**

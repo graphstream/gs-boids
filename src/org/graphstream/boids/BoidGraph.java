@@ -33,6 +33,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.graphstream.boids.forces.ntree.NTreeForcesFactory;
@@ -48,7 +49,7 @@ import org.miv.pherd.geom.Point3;
 import java.util.Random;
 
 /**
- * Shared data for boids.
+ * Represents a boid simulation and their underlying interaction graph. 
  * 
  * @author Damien Olivier
  * @author Guilhelm Savin
@@ -57,7 +58,7 @@ import java.util.Random;
 public class BoidGraph extends AdjacencyListGraph {
 
 	public static enum Parameter {
-		MAX_STEPS, AREA, SLEEP_TIME, STORE_FORCES_ATTRIBUTES, REMOVE_CAUGHT_BOIDS, NORMALIZE_MODE, RANDOM_SEED
+		MAX_STEPS, AREA, SLEEP_TIME, STORE_FORCES_ATTRIBUTES, NORMALIZE_MODE, RANDOM_SEED
 	}
 
 	/**
@@ -83,12 +84,7 @@ public class BoidGraph extends AdjacencyListGraph {
 	protected boolean storeForcesAttributes;
 
 	/**
-	 * Remove the boids caught by a predator ?.
-	 */
-	protected boolean removeCaughtBoids;
-
-	/**
-	 * Normalise boids attraction/repulsion vectors (make the boids move
+	 * Normalize boids attraction/repulsion vectors (make the boids move
 	 * constantly, since very small vectors can be extended).
 	 */
 	protected boolean normalizeMode;
@@ -118,10 +114,25 @@ public class BoidGraph extends AdjacencyListGraph {
 	 */
 	protected Random random;
 
+	/**
+	 * Factory for the forces model used in boids.
+	 */
 	protected BoidForcesFactory forcesFactory;
 
+	/**
+	 * Lower point in space.
+	 */
 	protected Point3 lowAnchor;
+	
+	/**
+	 * Higher point in space.
+	 */
 	protected Point3 highAnchor;
+	
+	/**
+	 * Listeners for boid-graph specific events.
+	 */
+	protected ArrayList<BoidGraphListener> listeners = new ArrayList<BoidGraphListener>();
 
 	/**
 	 * New context.
@@ -137,7 +148,6 @@ public class BoidGraph extends AdjacencyListGraph {
 		highAnchor = new Point3(1, 1, 1);
 		loop = false;
 		normalizeMode = true;
-		removeCaughtBoids = false;
 		storeForcesAttributes = false;
 		sleepTime = 20;
 		area = 1;
@@ -237,14 +247,6 @@ public class BoidGraph extends AdjacencyListGraph {
 
 	public void setSleepTime(int sleepTime) {
 		this.sleepTime = sleepTime;
-	}
-
-	public boolean isCaughtBoidsRemoved() {
-		return removeCaughtBoids;
-	}
-
-	public void setRemoveCaughtBoids(boolean removeCaughtBoids) {
-		this.removeCaughtBoids = removeCaughtBoids;
 	}
 
 	public boolean isNormalizeMode() {
@@ -366,9 +368,6 @@ public class BoidGraph extends AdjacencyListGraph {
 		case STORE_FORCES_ATTRIBUTES:
 			setStoreForcesAttributes(Boolean.parseBoolean(value));
 			break;
-		case REMOVE_CAUGHT_BOIDS:
-			setRemoveCaughtBoids(Boolean.parseBoolean(value));
-			break;
 		case NORMALIZE_MODE:
 			setNormalizeMode(Boolean.parseBoolean(value));
 			break;
@@ -408,6 +407,10 @@ public class BoidGraph extends AdjacencyListGraph {
 
 	public void step() {
 		stepBegins(step + 1);
+		
+		for(BoidGraphListener listener: listeners) {
+			listener.step(step + 1);
+		}
 	}
 
 	@Override
@@ -435,6 +438,14 @@ public class BoidGraph extends AdjacencyListGraph {
 		} catch (InterruptedException e) {
 		}
 	}
+	
+	/**
+	 * Register a listener for boid specific events.
+	 * @param listener The listener to register.
+	 */
+	public void addBoidGraphListener(BoidGraphListener listener) {
+		listeners.add(listener);
+	}
 
 	@Override
 	protected void addNodeCallback(AbstractNode node) {
@@ -442,6 +453,10 @@ public class BoidGraph extends AdjacencyListGraph {
 		b.getSpecies().register(b);
 
 		super.addNodeCallback(node);
+		
+		for(BoidGraphListener listener: listeners) {
+			listener.boidAdded(b);
+		}
 	}
 
 	@Override
@@ -450,6 +465,10 @@ public class BoidGraph extends AdjacencyListGraph {
 		b.getSpecies().unregister(b);
 
 		super.removeNodeCallback(node);
+		
+		for(BoidGraphListener listener: listeners) {
+			listener.boidDeleted(b);
+		}
 	}
 
 	@Override

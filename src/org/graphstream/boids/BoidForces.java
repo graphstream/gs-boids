@@ -105,11 +105,6 @@ public abstract class BoidForces {
 	 * Compute the forces applied to a boid under the form of a barycenter that
 	 * the boids tries to reach (attraction), an overall direction for all the
 	 * surrounding boids, an overall direction of all the surrounding boids.
-	 * 
-	 * @param source
-	 *            The boid the forces are computed on.
-	 * @param startCell
-	 *            The start cell (usually the root cell of the n-tree).
 	 */
 	public void compute() {
 		Collection<Boid> neigh;
@@ -203,13 +198,11 @@ public abstract class BoidForces {
 	public void moveBarycenter(Point3 p) {
 		barycenter.move(p);
 	}
-
+	
 	/**
 	 * A boid particle p2 that is visible by p1 as been found, integrate it in
 	 * the forces that apply to the boid p1.
 	 * 
-	 * @param p1
-	 *            The source boid.
 	 * @param b
 	 *            the boid visible by p1.
 	 * @param rep
@@ -291,7 +284,7 @@ public abstract class BoidForces {
 	 * angle for example.
 	 * </p>
 	 * 
-	 * @param source
+	 * @param boid
 	 *            The source boid.
 	 * @param point
 	 *            The point to consider.

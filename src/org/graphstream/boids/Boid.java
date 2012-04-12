@@ -45,13 +45,12 @@ import org.miv.pherd.geom.Point3;
  * </p>
  * 
  * <p>
- * The boid is in fact split in two parts, the {@link Boid} class itself and the
- * {@link BoidParticle} inner class that represents the boid in the forces
- * system. The boid particle in turn contains a {@link BoidForces} object that
- * represents all the forces exercising on the boid. Globally, the {@link Boid}
- * class acts on the graph and updates its position, creating links toward other
- * boids/nodes that it sees, whereas the {@link BoidParticle} and the
- * {@link BoidForces} are used to compute the boid position.
+ * The boid is in fact split in two parts, the {@link Boid} class itself that
+ * represents the boid in the forces system. The boid particle in turn contains
+ * a {@link BoidForces} object that represents all the forces exercising on the
+ * boid. Globally, the {@link Boid} class acts on the graph and updates its
+ * position, creating links toward other  boids/nodes that it sees, whereas
+ * the {@link BoidForces} are used to compute the boid position.
  * </p>
  * 
  * @author Guilhelm Savin
@@ -59,9 +58,8 @@ import org.miv.pherd.geom.Point3;
  */
 public class Boid extends AdjacencyListNode {
 
-	protected final BoidSpecies species;
-
 	/** Parameters of this group of boids. */
+	protected final BoidSpecies species;
 
 	/** The set of forces acting on this particle. */
 	protected BoidForces forces;
