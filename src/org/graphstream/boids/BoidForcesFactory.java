@@ -52,12 +52,8 @@ public interface BoidForcesFactory {
 	/**
 	 * Resize the space.
 	 * 
-	 * @param minx
-	 * @param miny
-	 * @param minz
-	 * @param maxx
-	 * @param maxy
-	 * @param maxz
+	 * @param low the new lowest point.
+	 * @param high the new highest point.
 	 */
 	void resize(Point3 low, Point3 high);
 	
