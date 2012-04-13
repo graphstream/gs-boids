@@ -312,11 +312,11 @@ public class BoidGraph extends AdjacencyListGraph {
 		return random;
 	}
 
-	protected BoidSpecies getOrCreateSpecies(String name) {
+	public BoidSpecies getOrCreateSpecies(String name) {
 		return getOrCreateSpecies(name, null);
 	}
 
-	protected BoidSpecies getOrCreateSpecies(String name, String clazz) {
+	public BoidSpecies getOrCreateSpecies(String name, String clazz) {
 		BoidSpecies species = boidSpecies.get(name);
 
 		if (species == null) {
