@@ -154,7 +154,7 @@ public class DemographicManager implements BoidGraphListener {
 			b = futureParents.poll();
 			
 			String id = b.getSpecies().createNewId();
-System.err.printf("  -> adding boid %s%n", id);
+			// System.err.printf("  -> adding boid %s%n", id);
 			ctx.addNode(id);
 //			ctx.addBoid(b.getSpecies(), b.getPosition().x, b.getPosition().y, b
 //					.getPosition().z);
@@ -181,7 +181,7 @@ System.err.printf("  -> adding boid %s%n", id);
 			}
 		}
 
-System.err.printf("Preparing to remove %d boids and add %d boids.%n", toRemove.size(), futureParents.size());
+		// System.err.printf("Preparing to remove %d boids and add %d boids.%n", toRemove.size(), futureParents.size());
 		
 		makeLove();
 		killAll();

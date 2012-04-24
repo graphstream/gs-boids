@@ -335,7 +335,7 @@ public class BoidSpecies implements Iterable<Boid> {
      * @param time The current boid graph time.
 	 */
 	public void terminateStep(double time) {
-System.err.printf("## pop for %s%n", getName());
+		// System.err.printf("## pop for %s%n", getName());
 		pop.step(time);
 	}
 
