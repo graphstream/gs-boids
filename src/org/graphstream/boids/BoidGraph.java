@@ -576,9 +576,10 @@ public class BoidGraph extends AdjacencyListGraph {
 	@Override
 	protected void addNodeCallback(AbstractNode node) {
 		Boid b = (Boid) node;
-		b.getSpecies().register(b);
 
 		super.addNodeCallback(node);
+		AbstractNode n = getNode(b.getId());
+		b.getSpecies().register(b);
 
 		for (BoidGraphListener listener : listeners) {
 			listener.boidAdded(b);

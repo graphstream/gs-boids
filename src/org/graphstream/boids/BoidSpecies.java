@@ -324,7 +324,9 @@ public class BoidSpecies implements Iterable<Boid> {
 				uiClass = uiClass.replaceAll("(^|\\s)" + name + "($|\\s)", " ");
 				uiClass = uiClass.trim();
 
-				b.setAttribute("ui.class", uiClass);
+				if(uiClass.length() == 0 )
+					 b.removeAttribute("ui.class");
+				else b.setAttribute("ui.class", uiClass);
 			}
 		}
 	}
@@ -335,7 +337,6 @@ public class BoidSpecies implements Iterable<Boid> {
      * @param time The current boid graph time.
 	 */
 	public void terminateStep(double time) {
-System.err.printf("## pop for %s%n", getName());
 		pop.step(time);
 	}
 
