@@ -39,6 +39,7 @@ import java.util.HashMap;
 
 import org.graphstream.boids.forces.ntree.NTreeForcesFactory;
 import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
 import org.graphstream.graph.NodeFactory;
 import org.graphstream.graph.implementations.AbstractNode;
 import org.graphstream.graph.implementations.AdjacencyListGraph;
@@ -58,6 +59,9 @@ import java.util.Random;
  * @author Antoine Dutot
  */
 public class BoidGraph extends AdjacencyListGraph {
+
+	public static boolean VERBOSE = Boolean.parseBoolean(System.getProperty(
+			"boids.verbose", "true"));
 
 	public static enum Parameter {
 		MAX_STEPS, AREA, SLEEP_TIME, STORE_FORCES_ATTRIBUTES, NORMALIZE_MODE, RANDOM_SEED, FORCES_FACTORY
@@ -135,11 +139,13 @@ public class BoidGraph extends AdjacencyListGraph {
 	 * Listeners for boid-graph specific events.
 	 */
 	protected ArrayList<BoidGraphListener> listeners = new ArrayList<BoidGraphListener>();
-	
+
 	/**
 	 * New boids simulation represented as an interaction graph.
 	 * 
-	 * <p>All parameters are set to defaults.</p>
+	 * <p>
+	 * All parameters are set to defaults.
+	 * </p>
 	 */
 	public BoidGraph() {
 		super("boids-context");
@@ -164,10 +170,14 @@ public class BoidGraph extends AdjacencyListGraph {
 	/**
 	 * New boids simulation represented as an interaction graph.
 	 * 
-	 * <p>This pre-load a configuration from a DGS file.</p>
+	 * <p>
+	 * This pre-load a configuration from a DGS file.
+	 * </p>
 	 * 
-	 * @param dgsConfig The initial configuration in DGS format.
-	 * @throws IOException If the DGS cannot be read.
+	 * @param dgsConfig
+	 *            The initial configuration in DGS format.
+	 * @throws IOException
+	 *             If the DGS cannot be read.
 	 */
 	public BoidGraph(String dgsConfig) throws IOException {
 		this();
@@ -192,6 +202,9 @@ public class BoidGraph extends AdjacencyListGraph {
 			in = new FileInputStream(dgs);
 		} catch (FileNotFoundException e) {
 			in = getClass().getResourceAsStream(dgs);
+
+			if (in == null)
+				in = ClassLoader.getSystemResourceAsStream(dgs);
 
 			if (in == null)
 				throw e;
@@ -219,7 +232,9 @@ public class BoidGraph extends AdjacencyListGraph {
 
 	/**
 	 * Set the factory used to instantiate the force system to use.
-	 * @param bff The force system factory.
+	 * 
+	 * @param bff
+	 *            The force system factory.
 	 */
 	public void setForcesFactory(BoidForcesFactory bff) {
 		if (forcesFactory != null)
@@ -238,8 +253,9 @@ public class BoidGraph extends AdjacencyListGraph {
 
 		forcesFactory.init();
 
-		System.out.printf("forces factory is now %s\n", bff.getClass()
-				.getName());
+		if (VERBOSE)
+			System.out.printf("forces factory is now %s\n", bff.getClass()
+					.getName());
 	}
 
 	public double getArea() {
@@ -306,6 +322,7 @@ public class BoidGraph extends AdjacencyListGraph {
 
 	/**
 	 * The random number generator used.
+	 * 
 	 * @return The random number generator.
 	 */
 	public Random getRandom() {
@@ -354,7 +371,9 @@ public class BoidGraph extends AdjacencyListGraph {
 			}
 
 			boidSpecies.put(name, species);
-			System.out.printf("new species : %s\n", name);
+
+			if (VERBOSE)
+				System.out.printf("new species : %s\n", name);
 		}
 
 		return species;
@@ -362,7 +381,9 @@ public class BoidGraph extends AdjacencyListGraph {
 
 	/**
 	 * The species with the given name.
-	 * @param name The species name.
+	 * 
+	 * @param name
+	 *            The species name.
 	 * @return The corresponding species or null if not found.
 	 */
 	public BoidSpecies getSpecies(String name) {
@@ -371,6 +392,7 @@ public class BoidGraph extends AdjacencyListGraph {
 
 	/**
 	 * The number of boid species actually.
+	 * 
 	 * @return The number of boid species.
 	 */
 	public int getSpeciesCount() {
@@ -379,6 +401,7 @@ public class BoidGraph extends AdjacencyListGraph {
 
 	/**
 	 * The species whose name is "default".
+	 * 
 	 * @return The default species.
 	 */
 	public BoidSpecies getDefaultSpecies() {
@@ -387,7 +410,9 @@ public class BoidGraph extends AdjacencyListGraph {
 
 	/**
 	 * Add a species with name "default" if does not yet exists.
-	 * @return The created default species or the old one if it was already present. 
+	 * 
+	 * @return The created default species or the old one if it was already
+	 *         present.
 	 */
 	public BoidSpecies addDefaultSpecies() {
 		return getOrCreateSpecies("default");
@@ -396,14 +421,16 @@ public class BoidGraph extends AdjacencyListGraph {
 	/**
 	 * Remove a species.
 	 * 
-	 * This also removed all the boids of this species. You cannot remove the "default" species.
+	 * This also removed all the boids of this species. You cannot remove the
+	 * "default" species.
 	 * 
-	 * @param name The species name.
+	 * @param name
+	 *            The species name.
 	 */
 	public void deleteSpecies(String name) {
 		if (!name.equals("default")) {
 			BoidSpecies species = boidSpecies.get(name);
-			if(species != null) {
+			if (species != null) {
 				species.release();
 				boidSpecies.remove(name);
 			}
@@ -528,7 +555,7 @@ public class BoidGraph extends AdjacencyListGraph {
 		}
 
 		forcesFactory.step();
-		
+
 		super.stepBegins(step);
 	}
 
@@ -561,16 +588,32 @@ public class BoidGraph extends AdjacencyListGraph {
 	public void addBoidGraphListener(BoidGraphListener listener) {
 		listeners.add(listener);
 	}
-	
+
 	/**
 	 * Unregister a listener for boid specific events.
-	 * @param listener The listener to remove.
+	 * 
+	 * @param listener
+	 *            The listener to remove.
 	 */
 	public void removeBoidGraphListener(BoidGraphListener listener) {
 		int index = listeners.indexOf(listener);
-		if(index >= 0) {
+		if (index >= 0) {
 			listeners.remove(index);
 		}
+	}
+
+	@Override
+	public <T extends Node> T addNode(String nodeId) {
+		T n = super.addNode(nodeId);
+		Boid b = (Boid) n;
+
+		b.getSpecies().checkClasses(b);
+
+		for (BoidGraphListener listener : listeners) {
+			listener.boidAdded(b);
+		}
+
+		return n;
 	}
 
 	@Override
@@ -578,12 +621,7 @@ public class BoidGraph extends AdjacencyListGraph {
 		Boid b = (Boid) node;
 
 		super.addNodeCallback(node);
-		AbstractNode n = getNode(b.getId());
 		b.getSpecies().register(b);
-
-		for (BoidGraphListener listener : listeners) {
-			listener.boidAdded(b);
-		}
 	}
 
 	@Override
@@ -637,8 +675,10 @@ public class BoidGraph extends AdjacencyListGraph {
 
 					if (key != null) {
 						try {
-							species.set(key, newValue == null ? null : newValue
-									.toString());
+							species.set(
+									key,
+									newValue == null ? null : newValue
+											.toString());
 						} catch (IllegalArgumentException e) {
 							System.err.printf("(WW) invalid parameter '%s'\n",
 									key);

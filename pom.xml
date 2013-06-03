@@ -21,7 +21,7 @@
 
 	<groupId>org.graphstream</groupId>
 	<artifactId>gs-boids</artifactId>
-	<version>git</version>
+	<version>1.0</version>
 
 	<name>gs-boids</name>
 	<description>
@@ -42,6 +42,25 @@
 		<url>https://github.com/graphstream/gs-core/issues</url>
 	</issueManagement>
 
+	<repositories>
+		<repository>
+			<releases>
+				<enabled>false</enabled>
+				<updatePolicy>always</updatePolicy>
+				<checksumPolicy>warn</checksumPolicy>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>never</updatePolicy>
+				<checksumPolicy>fail</checksumPolicy>
+			</snapshots>
+			<id>sonatype-nexus-snapshots</id>
+			<name>Sonatype Nexus Snapshots</name>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+			<layout>default</layout>
+		</repository>
+	</repositories>
+	
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -189,13 +208,13 @@
 		<dependency>
 			<groupId>org.graphstream</groupId>
 			<artifactId>gs-core</artifactId>
-			<version>1.2-git</version>
+			<version>[1.1,)</version>
 			<optional>false</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.graphstream</groupId>
 			<artifactId>gs-algo</artifactId>
-			<version>1.2-git</version>
+			<version>[1.1,)</version>
 			<optional>false</optional>
 		</dependency>
 	</dependencies>

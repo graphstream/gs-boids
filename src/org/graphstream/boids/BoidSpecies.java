@@ -137,7 +137,7 @@ public class BoidSpecies implements Iterable<Boid> {
 	protected HashMap<String, Boid> boids;
 
 	/**
-	 * Specify a CSS class for the species name for the GraphStream viewer. 
+	 * Specify a CSS class for the species name for the GraphStream viewer.
 	 */
 	protected boolean addSpeciesNameInUIClass;
 
@@ -145,16 +145,16 @@ public class BoidSpecies implements Iterable<Boid> {
 	 * Allow to create unique identifiers for boids.
 	 */
 	protected int currentIndex = 0;
-	
+
 	/**
 	 * Allow to create unique identifiers for boids.
 	 */
 	protected long timestamp = System.nanoTime();
-	
+
 	/**
 	 * Handle the addition or removal of boids.
 	 */
-	protected DemographicManager pop; 
+	protected DemographicManager pop;
 
 	/**
 	 * New default species with a random color.
@@ -183,7 +183,9 @@ public class BoidSpecies implements Iterable<Boid> {
 		inertia = 1.1f;
 		fearFactor = 1;
 		addSpeciesNameInUIClass = true;
-		pop = new DemographicManager.SpeciesDemographicManager(this, ctx, new Probability.ConstantProbability(0.01), new Probability.ConstantProbability(0.01));
+		pop = new DemographicManager.SpeciesDemographicManager(this, ctx,
+				new Probability.ConstantProbability(0.01),
+				new Probability.ConstantProbability(0.01));
 
 		this.color = new Color(ctx.random.nextFloat(), ctx.random.nextFloat(),
 				ctx.random.nextFloat());
@@ -226,7 +228,8 @@ public class BoidSpecies implements Iterable<Boid> {
 	 *            string value of the parameter
 	 */
 	public void set(Parameter p, String val) {
-		System.out.printf("set %s of %s to %s\n", p.name(), name, val);
+		if (BoidGraph.VERBOSE)
+			System.out.printf("set %s of %s to %s\n", p.name(), name, val);
 
 		switch (p) {
 		case COUNT:
@@ -301,7 +304,9 @@ public class BoidSpecies implements Iterable<Boid> {
 
 	void register(Boid b) {
 		boids.put(b.getId(), b);
+	}
 
+	void checkClasses(Boid b) {
 		if (addSpeciesNameInUIClass) {
 			String uiClass = b.getAttribute("ui.class");
 
@@ -317,24 +322,25 @@ public class BoidSpecies implements Iterable<Boid> {
 	void unregister(Boid b) {
 		boids.remove(b.getId());
 
-		if (addSpeciesNameInUIClass) {
-			String uiClass = b.getAttribute("ui.class");
-
-			if (uiClass != null && uiClass.indexOf(name) != -1) {
-				uiClass = uiClass.replaceAll("(^|\\s)" + name + "($|\\s)", " ");
-				uiClass = uiClass.trim();
-
-				if(uiClass.length() == 0 )
-					 b.removeAttribute("ui.class");
-				else b.setAttribute("ui.class", uiClass);
-			}
-		}
+		/*
+		 * if (addSpeciesNameInUIClass) { String uiClass =
+		 * b.getAttribute("ui.class");
+		 * 
+		 * if (uiClass != null && uiClass.indexOf(name) != -1) { uiClass =
+		 * uiClass.replaceAll("(^|\\s)" + name + "($|\\s)", " "); uiClass =
+		 * uiClass.trim();
+		 * 
+		 * if(uiClass.length() == 0 ) b.removeAttribute("ui.class"); else
+		 * b.setAttribute("ui.class", uiClass); } }
+		 */
 	}
 
 	/**
 	 * This method is called by {@link org.graphstream.boids.BoidGraph} at the
 	 * end of each step. It can be used by sub-classes to add some code.
-     * @param time The current boid graph time.
+	 * 
+	 * @param time
+	 *            The current boid graph time.
 	 */
 	public void terminateStep(double time) {
 		pop.step(time);
@@ -577,41 +583,46 @@ public class BoidSpecies implements Iterable<Boid> {
 	public void setAngleOfView(double aov) {
 		angleOfView = aov;
 	}
-	
+
 	/**
 	 * The probability that a boids clones itself.
-	 * @param probability A probability instance.
+	 * 
+	 * @param probability
+	 *            A probability instance.
 	 */
 	public void setReproductionProbability(Probability probability) {
 		pop.setReproduceCondition(probability);
 	}
-	
+
 	/**
 	 * The probability that a boids die.
-	 * @param probability A probability instance.
+	 * 
+	 * @param probability
+	 *            A probability instance.
 	 */
 	public void setDeathCondition(Probability probability) {
 		pop.setDeathProbability(probability);
 	}
-	
+
 	/**
 	 * Unregister this species from the boids graph.
 	 * 
-	 * This removes all boids pertaining to this species, and release the link with the graph.
+	 * This removes all boids pertaining to this species, and release the link
+	 * with the graph.
 	 */
 	public void release() {
 		pop.release();
-		
+
 		Iterator<Node> i = ctx.getNodeIterator();
-		
-		while(i.hasNext()) {
+
+		while (i.hasNext()) {
 			Boid b = (Boid) i.next();
-			if(b.getSpecies() == this) {
+			if (b.getSpecies() == this) {
 				i.remove();
 			}
 		}
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 

@@ -35,7 +35,7 @@ import org.graphstream.boids.BoidGraph;
 import org.miv.pherd.geom.Point3;
 
 public class GreedyForcesFactory implements BoidForcesFactory {
-	BoidGraph ctx;
+	protected BoidGraph ctx;
 
 	public GreedyForcesFactory(BoidGraph ctx) {
 		this.ctx = ctx;
