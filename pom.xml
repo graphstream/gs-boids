@@ -65,6 +65,37 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
+	<profiles>
+		<profile>
+			<!--
+				This profile has to be enabled when releasing the package. It will
+				enable the sign phase.
+			-->
+			<id>release</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<configuration>
+							<keyname><![CDATA[GraphStream Team <team@graphstream-project.org>]]></keyname>
+							<skip>false</skip>
+						</configuration>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>package</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
 	<!-- The GraphStream Team. Members are sorted in alphabetically. -->
 	<developers>
 		<developer>
