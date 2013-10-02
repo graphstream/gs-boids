@@ -102,7 +102,9 @@ public class BoidGenerator extends SourceBase implements Generator {
 				e1.printStackTrace();
 			}
 		} else {
-			ctx.addDefaultSpecies().setCount(100);
+			BoidSpecies species = ctx.addDefaultSpecies();
+			species.setInitialCount(100);
+			species.populate();
 		}
 	}
 
@@ -114,7 +116,7 @@ public class BoidGenerator extends SourceBase implements Generator {
 	public void end() {
 		ctx.clearSinks();
 		ctx.clear();
-		
+
 		ctx = null;
 	}
 

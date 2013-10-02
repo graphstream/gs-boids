@@ -156,6 +156,8 @@ public class BoidSpecies implements Iterable<Boid> {
 	 */
 	protected DemographicManager pop;
 
+	protected int initialCount = 0;
+
 	/**
 	 * New default species with a random color.
 	 * 
@@ -184,8 +186,8 @@ public class BoidSpecies implements Iterable<Boid> {
 		fearFactor = 1;
 		addSpeciesNameInUIClass = true;
 		pop = new DemographicManager.SpeciesDemographicManager(this, ctx,
-				new Probability.ConstantProbability(0.01),
-				new Probability.ConstantProbability(0.01));
+				new Probability.ConstantProbability(0),
+				new Probability.ConstantProbability(0));
 
 		this.color = new Color(ctx.random.nextFloat(), ctx.random.nextFloat(),
 				ctx.random.nextFloat());
@@ -233,7 +235,7 @@ public class BoidSpecies implements Iterable<Boid> {
 
 		switch (p) {
 		case COUNT:
-			setCount(Integer.parseInt(val));
+			initialCount = Integer.parseInt(val);
 			break;
 		case VIEW_ZONE:
 			viewZone = Double.parseDouble(val);
@@ -362,9 +364,15 @@ public class BoidSpecies implements Iterable<Boid> {
 	 * @param count
 	 *            the minimum boid count for this species
 	 */
-	public void setCount(int count) {
-		while (boids.size() < count)
+	public void populate() {
+		int count = initialCount - boids.size();
+
+		while (count-- > 0)
 			ctx.addNode(createNewId());
+	}
+
+	public void setInitialCount(int count) {
+		initialCount = count;
 	}
 
 	/**

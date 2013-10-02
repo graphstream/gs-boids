@@ -28,6 +28,7 @@
  */
 package org.graphstream.boids;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -39,10 +40,9 @@ import java.util.HashMap;
 
 import org.graphstream.boids.forces.ntree.NTreeForcesFactory;
 import org.graphstream.graph.Graph;
-import org.graphstream.graph.Node;
 import org.graphstream.graph.NodeFactory;
-import org.graphstream.graph.implementations.AbstractNode;
 import org.graphstream.graph.implementations.AdjacencyListGraph;
+import org.graphstream.stream.SinkAdapter;
 import org.graphstream.stream.file.FileSourceDGS;
 import org.graphstream.ui.swingViewer.Viewer;
 import org.graphstream.ui.swingViewer.util.Camera;
@@ -61,7 +61,7 @@ import java.util.Random;
 public class BoidGraph extends AdjacencyListGraph {
 
 	public static boolean VERBOSE = Boolean.parseBoolean(System.getProperty(
-			"boids.verbose", "true"));
+			"boids.verbose", "false"));
 
 	public static enum Parameter {
 		MAX_STEPS, AREA, SLEEP_TIME, STORE_FORCES_ATTRIBUTES, NORMALIZE_MODE, RANDOM_SEED, FORCES_FACTORY
@@ -138,7 +138,7 @@ public class BoidGraph extends AdjacencyListGraph {
 	/**
 	 * Listeners for boid-graph specific events.
 	 */
-	protected ArrayList<BoidGraphListener> listeners = new ArrayList<BoidGraphListener>();
+	protected ArrayList<BoidGraphListener> boidGraphListeners = new ArrayList<BoidGraphListener>();
 
 	/**
 	 * New boids simulation represented as an interaction graph.
@@ -149,6 +149,8 @@ public class BoidGraph extends AdjacencyListGraph {
 	 */
 	public BoidGraph() {
 		super("boids-context");
+		addSink(new Handler());
+
 		setNodeFactory(new BoidFactory());
 
 		random = new Random();
@@ -195,19 +197,21 @@ public class BoidGraph extends AdjacencyListGraph {
 	 * @throws IOException
 	 *             if something wrong happens with io.
 	 */
+	@SuppressWarnings("resource")
 	public void loadDGSConfiguration(String dgs) throws IOException {
 		InputStream in;
+		File f = new File(dgs);
 
-		try {
+		if (f.exists()) {
 			in = new FileInputStream(dgs);
-		} catch (FileNotFoundException e) {
+		} else {
 			in = getClass().getResourceAsStream(dgs);
 
 			if (in == null)
 				in = ClassLoader.getSystemResourceAsStream(dgs);
 
 			if (in == null)
-				throw e;
+				throw new FileNotFoundException(dgs);
 		}
 
 		loadDGSConfiguration(in);
@@ -228,6 +232,9 @@ public class BoidGraph extends AdjacencyListGraph {
 		config.addSink(this);
 		config.readAll(in);
 		config.removeSink(this);
+
+		for (BoidSpecies species : boidSpecies.values())
+			species.populate();
 	}
 
 	/**
@@ -545,20 +552,6 @@ public class BoidGraph extends AdjacencyListGraph {
 		stepBegins(step);
 	}
 
-	@Override
-	public void stepBegins(double step) {
-		for (BoidSpecies sp : boidSpecies.values()) {
-			sp.terminateStep(step);
-		}
-		for (BoidGraphListener listener : listeners) {
-			listener.step(step);
-		}
-
-		forcesFactory.step();
-
-		super.stepBegins(step);
-	}
-
 	public boolean isLooping() {
 		return loop;
 	}
@@ -586,7 +579,7 @@ public class BoidGraph extends AdjacencyListGraph {
 	 *            The listener to register.
 	 */
 	public void addBoidGraphListener(BoidGraphListener listener) {
-		listeners.add(listener);
+		boidGraphListeners.add(listener);
 	}
 
 	/**
@@ -596,75 +589,67 @@ public class BoidGraph extends AdjacencyListGraph {
 	 *            The listener to remove.
 	 */
 	public void removeBoidGraphListener(BoidGraphListener listener) {
-		int index = listeners.indexOf(listener);
+		int index = boidGraphListeners.indexOf(listener);
 		if (index >= 0) {
-			listeners.remove(index);
+			boidGraphListeners.remove(index);
 		}
 	}
 
-	@Override
-	public <T extends Node> T addNode(String nodeId) {
-		T n = super.addNode(nodeId);
-		Boid b = (Boid) n;
+	private class Handler extends SinkAdapter {
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.stream.SinkAdapter#nodeAdded(java.lang.String,
+		 * long, java.lang.String)
+		 */
+		public void nodeAdded(String sourceId, long timeId, String nodeId) {
+			Boid b = getNode(nodeId);
 
-		b.getSpecies().checkClasses(b);
+			b.getSpecies().register(b);
+			b.getSpecies().checkClasses(b);
 
-		for (BoidGraphListener listener : listeners) {
-			listener.boidAdded(b);
+			for (BoidGraphListener listener : boidGraphListeners)
+				listener.boidAdded(b);
 		}
 
-		return n;
-	}
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.stream.SinkAdapter#nodeRemoved(java.lang.String,
+		 * long, java.lang.String)
+		 */
+		public void nodeRemoved(String sourceId, long timeId, String nodeId) {
+			Boid b = getNode(nodeId);
+			b.getSpecies().unregister(b);
 
-	@Override
-	protected void addNodeCallback(AbstractNode node) {
-		Boid b = (Boid) node;
-
-		super.addNodeCallback(node);
-		b.getSpecies().register(b);
-	}
-
-	@Override
-	protected void removeNodeCallback(AbstractNode node) {
-		Boid b = (Boid) node;
-		b.getSpecies().unregister(b);
-
-		super.removeNodeCallback(node);
-
-		for (BoidGraphListener listener : listeners) {
-			listener.boidDeleted(b);
+			for (BoidGraphListener listener : boidGraphListeners)
+				listener.boidDeleted(b);
 		}
-	}
 
-	@Override
-	protected void attributeChanged(String sourceId, long timeId,
-			String attribute, AttributeChangeEvent event, Object oldValue,
-			Object newValue) {
-		String key = attribute;
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see
+		 * org.graphstream.stream.SinkAdapter#graphAttributeAdded(java.lang.
+		 * String, long, java.lang.String, java.lang.Object)
+		 */
+		public void graphAttributeAdded(String sourceId, long timeId,
+				String key, Object newValue) {
+			if (key.startsWith("boids.")) {
+				key = key.substring("boids.".length());
 
-		if (key.startsWith("boids.")) {
-			key = key.substring("boids.".length());
+				if (key.startsWith("species.")) {
+					key = key.substring("species.".length());
+					String name;
 
-			if (key.startsWith("species.")) {
-				key = key.substring("species.".length());
-				String name;
+					if (key.indexOf('.') > 0) {
+						name = key.substring(0, key.indexOf('.'));
+						key = key.substring(name.length() + 1);
+					} else {
+						name = key;
+						key = null;
+					}
 
-				if (key.indexOf('.') > 0) {
-					name = key.substring(0, key.indexOf('.'));
-					key = key.substring(name.length() + 1);
-				} else {
-					name = key;
-					key = null;
-				}
-
-				switch (event) {
-				case REMOVE:
-					if (boidSpecies.containsKey(name))
-						deleteSpecies(name);
-
-					break;
-				case ADD:
-				case CHANGE:
 					BoidSpecies species;
 
 					if (key == null && newValue != null
@@ -683,17 +668,75 @@ public class BoidGraph extends AdjacencyListGraph {
 							System.err.printf("(WW) invalid parameter '%s'\n",
 									key);
 							System.err.printf("     ignoring it.\n");
+							e.printStackTrace();
 						}
 					}
 
-					break;
-				}
-			} else
-				set(key, newValue == null ? null : newValue.toString());
+				} else
+					set(key, newValue == null ? null : newValue.toString());
+			}
 		}
 
-		super.attributeChanged(sourceId, timeId, attribute, event, oldValue,
-				newValue);
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see
+		 * org.graphstream.stream.SinkAdapter#graphAttributeChanged(java.lang
+		 * .String, long, java.lang.String, java.lang.Object, java.lang.Object)
+		 */
+		public void graphAttributeChanged(String sourceId, long timeId,
+				String attribute, Object oldValue, Object newValue) {
+			graphAttributeAdded(sourceId, timeId, attribute, newValue);
+		}
+
+		/*
+		 * *(non-Javadoc)
+		 * 
+		 * @see
+		 * org.graphstream.stream.SinkAdapter#graphAttributeRemoved(java.lang
+		 * .String, long, java.lang.String)
+		 */
+		public void graphAttributeRemoved(String sourceId, long timeId,
+				String key) {
+			if (key.startsWith("boids.")) {
+				key = key.substring("boids.".length());
+
+				if (key.startsWith("species.")) {
+					key = key.substring("species.".length());
+					String name;
+
+					if (key.indexOf('.') > 0) {
+						name = key.substring(0, key.indexOf('.'));
+						key = key.substring(name.length() + 1);
+					} else {
+						name = key;
+						key = null;
+					}
+
+					if (boidSpecies.containsKey(name))
+						deleteSpecies(name);
+
+				} else
+					set(key, null);
+			}
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.stream.SinkAdapter#stepBegins(java.lang.String,
+		 * long, double)
+		 */
+		public void stepBegins(String sourceId, long timeId, double step) {
+			for (BoidSpecies sp : boidSpecies.values()) {
+				sp.terminateStep(step);
+			}
+			for (BoidGraphListener listener : boidGraphListeners) {
+				listener.step(step);
+			}
+
+			forcesFactory.step();
+		}
 	}
 
 	private class BoidFactory implements NodeFactory<Boid> {
@@ -719,8 +762,7 @@ public class BoidGraph extends AdjacencyListGraph {
 		BoidGraph ctx = new BoidGraph();
 
 		try {
-			ctx.loadDGSConfiguration(BoidGraph.class
-					.getResourceAsStream("configExampleWithTwoSpecies.dgs"));
+			ctx.loadDGSConfiguration("configExampleWithTwoSpecies.dgs");
 		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
