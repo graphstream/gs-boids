@@ -46,7 +46,7 @@ public class BoidSpecies implements Iterable<Boid> {
 	 * Kinds of parameters.
 	 */
 	public static enum Parameter {
-		COUNT, ANGLE_OF_VIEW, VIEW_ZONE, SPEED_FACTOR, MAX_SPEED, MIN_SPEED, DIRECTION_FACTOR, ATTRACTION_FACTOR, REPULSION_FACTOR, INERTIA, FEAR_FACTOR, ADD_SPECIES_NAME_IN_UI_CLASS
+		COUNT, ANGLE_OF_VIEW, VIEW_ZONE, SPEED_FACTOR, MAX_SPEED, MIN_SPEED, DIRECTION_FACTOR, ATTRACTION_FACTOR, REPULSION_FACTOR, INERTIA, FEAR_FACTOR, ADD_SPECIES_NAME_IN_UI_CLASS, MAX_NEIGHBORHOOD
 	}
 
 	/**
@@ -157,6 +157,8 @@ public class BoidSpecies implements Iterable<Boid> {
 	protected DemographicManager pop;
 
 	protected int initialCount = 0;
+
+	int maxNeighborhood = 20;
 
 	/**
 	 * New default species with a random color.
@@ -269,6 +271,13 @@ public class BoidSpecies implements Iterable<Boid> {
 			break;
 		case ADD_SPECIES_NAME_IN_UI_CLASS:
 			addSpeciesNameInUIClass = Boolean.parseBoolean(val);
+			break;
+		case MAX_NEIGHBORHOOD:
+			maxNeighborhood = (int) Double.parseDouble(val);
+
+			if (maxNeighborhood <= 0)
+				maxNeighborhood = Integer.MAX_VALUE;
+
 			break;
 		}
 	}

@@ -549,6 +549,16 @@ public class BoidGraph extends AdjacencyListGraph {
 
 	public void step() {
 		step++;
+
+		for (BoidSpecies sp : boidSpecies.values()) {
+			sp.terminateStep(step);
+		}
+		for (BoidGraphListener listener : boidGraphListeners) {
+			listener.step(step);
+		}
+
+		forcesFactory.step();
+
 		stepBegins(step);
 	}
 
@@ -720,23 +730,6 @@ public class BoidGraph extends AdjacencyListGraph {
 					set(key, null);
 			}
 		}
-
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see org.graphstream.stream.SinkAdapter#stepBegins(java.lang.String,
-		 * long, double)
-		 */
-		public void stepBegins(String sourceId, long timeId, double step) {
-			for (BoidSpecies sp : boidSpecies.values()) {
-				sp.terminateStep(step);
-			}
-			for (BoidGraphListener listener : boidGraphListeners) {
-				listener.step(step);
-			}
-
-			forcesFactory.step();
-		}
 	}
 
 	private class BoidFactory implements NodeFactory<Boid> {
@@ -762,7 +755,7 @@ public class BoidGraph extends AdjacencyListGraph {
 		BoidGraph ctx = new BoidGraph();
 
 		try {
-			ctx.loadDGSConfiguration("configExampleWithTwoSpecies.dgs");
+			ctx.loadDGSConfiguration("configExample.dgs");
 		} catch (Exception e1) {
 			e1.printStackTrace();
 		}

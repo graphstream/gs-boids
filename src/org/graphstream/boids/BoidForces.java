@@ -133,8 +133,8 @@ public abstract class BoidForces {
 			direction.scalarDiv(countAtt);
 			attraction
 					.set(barycenter.x - boid.getPosition().x, barycenter.y
-							- boid.getPosition().y, barycenter.z
-							- boid.getPosition().z);
+							- boid.getPosition().y,
+							barycenter.z - boid.getPosition().z);
 		}
 
 		if (countRep > 0) {
@@ -198,7 +198,7 @@ public abstract class BoidForces {
 	public void moveBarycenter(Point3 p) {
 		barycenter.move(p);
 	}
-	
+
 	/**
 	 * A boid particle p2 that is visible by p1 as been found, integrate it in
 	 * the forces that apply to the boid p1.
@@ -262,12 +262,15 @@ public abstract class BoidForces {
 			nextPos.y = hi.y - aarea;
 			dir.data[1] = -dir.data[1];
 		}
-		if (nextPos.z + dir.data[2] <= lo.z + aarea) {
-			nextPos.z = lo.z + aarea;
-			dir.data[2] = -dir.data[2];
-		} else if (nextPos.z + dir.data[2] >= hi.z - aarea) {
-			nextPos.z = hi.z - aarea;
-			dir.data[2] = -dir.data[2];
+
+		if (is3D()) {
+			if (nextPos.z + dir.data[2] <= lo.z + aarea) {
+				nextPos.z = lo.z + aarea;
+				dir.data[2] = -dir.data[2];
+			} else if (nextPos.z + dir.data[2] >= hi.z - aarea) {
+				nextPos.z = hi.z - aarea;
+				dir.data[2] = -dir.data[2];
+			}
 		}
 	}
 
@@ -345,4 +348,6 @@ public abstract class BoidForces {
 	public abstract Point3 getNextPosition();
 
 	public abstract Collection<Boid> getNeighborhood();
+
+	public abstract boolean is3D();
 }

@@ -5,7 +5,7 @@ null 0 0
 # GraphStream attributes
 #
 
-cg ui.quality ui.antialias
+#cg ui.quality ui.antialias
 cg ui.stylesheet="node.bee { size: 10px; fill-color: orange; } node.moustik { size: 4px; fill-color: #1d1d1d; } edge { fill-color: grey; }"
 
 #
@@ -22,7 +22,7 @@ cg boids.sleep_time=30
 #
 
 cg boids.species.moustik=org.graphstream.boids.BoidSpecies
-cg boids.species.moustik.angle_of_view=0
+cg boids.species.moustik.angle_of_view=0.1
 cg boids.species.moustik.view_zone=0.15
 cg boids.species.moustik.speed_factor=0.3
 cg boids.species.moustik.max_speed=0.9
@@ -44,7 +44,7 @@ cg boids.species.bee.speed_factor=0.3
 cg boids.species.bee.max_speed=1
 cg boids.species.bee.min_speed=0.1
 cg boids.species.bee.direction_factor=0.2
-cg boids.species.bee.attraction_factor=0.3
+cg boids.species.bee.attraction_factor=0.4
 cg boids.species.bee.repulsion_factor=0.005
 cg boids.species.bee.inertia=1.1
 cg boids.species.bee.add_species_name_in_ui_class=true 
@@ -53,7 +53,7 @@ cg boids.species.bee.add_species_name_in_ui_class=true
 # This last command create 100 boids of the moustik species
 #
 
-cg boids.species.moustik.count=100
+cg boids.species.moustik.count=1000
 cg boids.species.bee.count=100
 
-cg boids.forces_factory=org.graphstream.boids.forces.greedy.GreedyForcesFactory
+cg boids.forces_factory=org.graphstream.boids.forces.ntree.NTreeForcesFactory

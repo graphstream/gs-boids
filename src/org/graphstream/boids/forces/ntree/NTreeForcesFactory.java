@@ -39,6 +39,7 @@ import org.miv.pherd.geom.Point3;
 import org.miv.pherd.ntree.Anchor;
 import org.miv.pherd.ntree.CellSpace;
 import org.miv.pherd.ntree.OctreeCellSpace;
+import org.miv.pherd.ntree.QuadtreeCellSpace;
 
 public class NTreeForcesFactory implements BoidForcesFactory, ElementSink {
 
@@ -50,12 +51,25 @@ public class NTreeForcesFactory implements BoidForcesFactory, ElementSink {
 
 	protected BoidGraph ctx;
 
+	protected boolean is3D;
+
 	public NTreeForcesFactory(BoidGraph ctx) {
+		this(ctx, false);
+	}
+
+	public NTreeForcesFactory(BoidGraph ctx, boolean is3D) {
 		double area = ctx.getArea();
 		int maxParticlesPerCell = 10;
 
-		this.space = new OctreeCellSpace(new Anchor(-area, -area, -area),
-				new Anchor(area, area, area));
+		this.is3D = is3D;
+
+		if (is3D)
+			this.space = new OctreeCellSpace(new Anchor(-area, -area, -area),
+					new Anchor(area, area, area));
+		else
+			this.space = new QuadtreeCellSpace(new Anchor(-area, -area, 0),
+					new Anchor(area, area, 0));
+
 		this.pbox = new ParticleBox(maxParticlesPerCell, space,
 				new BoidCellData());
 		this.ctx = ctx;
@@ -84,7 +98,7 @@ public class NTreeForcesFactory implements BoidForcesFactory, ElementSink {
 	 */
 	public BoidForces createNewForces(Boid b) {
 		BoidParticle p = new BoidParticle(ctx, b);
-		NTreeForces f = new NTreeForces(p);
+		NTreeForces f = is3D ? new NTreeForces3D(p) : new NTreeForces(p);
 
 		return f;
 	}

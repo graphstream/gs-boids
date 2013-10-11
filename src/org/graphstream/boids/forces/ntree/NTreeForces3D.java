@@ -28,15 +28,7 @@
  */
 package org.graphstream.boids.forces.ntree;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-
 import org.graphstream.boids.Boid;
-import org.graphstream.boids.BoidForces;
-import org.miv.pherd.Particle;
-import org.miv.pherd.geom.Point3;
 import org.miv.pherd.ntree.Cell;
 
 /**
@@ -52,86 +44,9 @@ import org.miv.pherd.ntree.Cell;
  * @author Guilhelm Savin
  * @author Antoine Dutot
  */
-public class NTreeForces extends BoidForces {
-	BoidParticle p;
-
-	public NTreeForces(BoidParticle p) {
-		super(p.b);
-		this.p = p;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.graphstream.boids.BoidForces#getPosition()
-	 */
-	@Override
-	public Point3 getPosition() {
-		return p.getPosition();
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.graphstream.boids.BoidForces#setPosition(double, double, double)
-	 */
-	@Override
-	public void setPosition(double x, double y, double z) {
-		p.setPosition(x, y, z);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.graphstream.boids.BoidForces#getNextPosition()
-	 */
-	@Override
-	public Point3 getNextPosition() {
-		return p.getNextPosition();
-	}
-
-	/**
-	 * Recursively explore the n-tree to search for intersection cells, and the
-	 * visible boids.
-	 * 
-	 * @param cell
-	 *            The cell to explore recursively.
-	 * @param contacts
-	 *            The set of visible boids to build by exploration.
-	 */
-	protected void exploreTree(Cell cell, Set<Boid> contacts) {
-		if (intersection(boid, cell)) {
-			if (cell.isLeaf())
-				forcesFromCell(cell, contacts);
-			else {
-				int n = cell.getSpace().getDivisions();
-
-				for (int i = 0; i < n; ++i)
-					exploreTree(cell.getSub(i), contacts);
-			}
-		}
-	}
-
-	/**
-	 * A leaf cell has been found that is in intersection with the boid area,
-	 * computes the forces from this cell.
-	 * 
-	 * @param cell
-	 *            The cell.
-	 * @param contacts
-	 *            The set of visible boids to build by exploration.
-	 */
-	protected void forcesFromCell(Cell cell, Set<Boid> contacts) {
-		Iterator<? extends Particle> particles = cell.getParticles();
-
-		while (particles.hasNext()) {
-			Particle particle = particles.next();
-
-			if (particle instanceof BoidParticle) {
-				if (p != particle && isVisible(boid, particle.getPosition()))
-					contacts.add(((BoidParticle) particle).b);
-			}
-		}
+public class NTreeForces3D extends NTreeForces {
+	public NTreeForces3D(BoidParticle p) {
+		super(p);
 	}
 
 	/**
@@ -150,13 +65,17 @@ public class NTreeForces extends BoidForces {
 
 		double x1 = cell.getSpace().getLoAnchor().x;
 		double y1 = cell.getSpace().getLoAnchor().y;
+		double z1 = cell.getSpace().getLoAnchor().z;
 		double x2 = cell.getSpace().getHiAnchor().x;
 		double y2 = cell.getSpace().getHiAnchor().y;
+		double z2 = cell.getSpace().getHiAnchor().z;
 
 		double X1 = source.getPosition().x - vz;
 		double Y1 = source.getPosition().y - vz;
+		double Z1 = source.getPosition().z - vz;
 		double X2 = source.getPosition().x + vz;
 		double Y2 = source.getPosition().y + vz;
+		double Z2 = source.getPosition().z + vz;
 
 		// Only when the area is before or after the cell there cannot
 		// exist an intersection (case a and b). Else there must be an
@@ -178,22 +97,10 @@ public class NTreeForces extends BoidForces {
 		if (Y2 < y1 || Y1 > y2)
 			return false;
 
+		if (Z2 < z1 || Z1 > z2)
+			return false;
+
 		return true;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.graphstream.boids.BoidForces#getNeighborhood()
-	 */
-	@Override
-	public Collection<Boid> getNeighborhood() {
-		HashSet<Boid> neigh = new HashSet<Boid>();
-		Cell startCell = p.getCell().getTree().getRootCell();
-
-		exploreTree(startCell, neigh);
-
-		return neigh;
 	}
 
 	/*
@@ -202,6 +109,6 @@ public class NTreeForces extends BoidForces {
 	 * @see org.graphstream.boids.BoidForces#is3D()
 	 */
 	public boolean is3D() {
-		return false;
+		return true;
 	}
 }

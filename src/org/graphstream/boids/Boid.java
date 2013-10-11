@@ -49,8 +49,8 @@ import org.miv.pherd.geom.Point3;
  * represents the boid in the forces system. The boid particle in turn contains
  * a {@link BoidForces} object that represents all the forces exercising on the
  * boid. Globally, the {@link Boid} class acts on the graph and updates its
- * position, creating links toward other  boids/nodes that it sees, whereas
- * the {@link BoidForces} are used to compute the boid position.
+ * position, creating links toward other boids/nodes that it sees, whereas the
+ * {@link BoidForces} are used to compute the boid position.
  * </p>
  * 
  * @author Guilhelm Savin
@@ -109,11 +109,11 @@ public class Boid extends AdjacencyListNode {
 	}
 
 	public void checkNeighborhood(Boid... boids) {
-		if(getGraph().getNode(getId()) == null) {
+		if (getGraph().getNode(getId()) == null) {
 			System.err.printf("I do not exist any more !!!%n");
 			return;
 		}
-		
+
 		if (boids != null) {
 			Iterator<Boid> it = getNeighborNodeIterator();
 			LinkedList<Boid> toRemove = null;
@@ -146,11 +146,14 @@ public class Boid extends AdjacencyListNode {
 			}
 
 			for (Boid b2 : boids) {
-				if (getEdgeBetween(b2) == null) {
-					if(getGraph().getNode(b2.getId())!= null)
-					     getGraph().addEdge(getEdgeId(this, b2), this, b2);
-					else System.err.printf("%s does not exists !!%n", b2.getId());
-				}	
+				if (getEdgeBetween(b2) == null
+						&& getDegree() < species.maxNeighborhood) {
+					if (getGraph().getNode(b2.getId()) != null)
+						getGraph().addEdge(getEdgeId(this, b2), this, b2);
+					else
+						System.err
+								.printf("%s does not exists !!%n", b2.getId());
+				}
 			}
 		} else {
 			while (getDegree() > 0)

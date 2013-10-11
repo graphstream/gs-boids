@@ -56,7 +56,7 @@ public class GreedyForces extends BoidForces {
 		position.x = r.nextDouble() * (hi.x - lo.x) + lo.x;
 		position.y = r.nextDouble() * (hi.y - lo.y) + lo.y;
 		position.z = 0;
-		
+
 		nextPosition.copy(position);
 	}
 
@@ -91,7 +91,7 @@ public class GreedyForces extends BoidForces {
 			if (isVisible(boid, b.getPosition()))
 				contacts.add(b);
 		}
-		
+
 		return contacts;
 	}
 
@@ -102,5 +102,14 @@ public class GreedyForces extends BoidForces {
 	 */
 	public Point3 getNextPosition() {
 		return nextPosition;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.boids.BoidForces#is3D()
+	 */
+	public boolean is3D() {
+		return false;
 	}
 }
