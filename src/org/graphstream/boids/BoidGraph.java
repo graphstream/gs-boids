@@ -44,8 +44,8 @@ import org.graphstream.graph.NodeFactory;
 import org.graphstream.graph.implementations.AdjacencyListGraph;
 import org.graphstream.stream.SinkAdapter;
 import org.graphstream.stream.file.FileSourceDGS;
-import org.graphstream.ui.swingViewer.Viewer;
-import org.graphstream.ui.swingViewer.util.Camera;
+import org.graphstream.ui.view.Viewer;
+import org.graphstream.ui.view.Camera;
 import org.miv.pherd.geom.Point3;
 import org.miv.pherd.geom.Vector3;
 
