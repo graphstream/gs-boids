@@ -45,7 +45,7 @@ import org.graphstream.graph.implementations.AdjacencyListGraph;
 import org.graphstream.stream.SinkAdapter;
 import org.graphstream.stream.file.FileSourceDGS;
 import org.graphstream.ui.view.Viewer;
-import org.graphstream.ui.view.Camera;
+import org.graphstream.ui.view.camera.Camera;
 import org.miv.pherd.geom.Point3;
 import org.miv.pherd.geom.Vector3;
 
@@ -249,14 +249,15 @@ public class BoidGraph extends AdjacencyListGraph {
 
 		forcesFactory = bff;
 
-		for (Boid b : this.<Boid> getEachNode()) {
+		nodes().forEach( n -> {
+			Boid b = (Boid) n;
 			Point3 p = b.getPosition();
 			Vector3 d = b.getForces().getDirection();
 
 			b.setForces(bff.createNewForces(b));
 			b.setPosition(p.x, p.y, p.z);
 			b.getForces().getDirection().copy(d);
-		}
+		});
 
 		forcesFactory.init();
 
@@ -613,7 +614,7 @@ public class BoidGraph extends AdjacencyListGraph {
 		 * long, java.lang.String)
 		 */
 		public void nodeAdded(String sourceId, long timeId, String nodeId) {
-			Boid b = getNode(nodeId);
+			Boid b = (Boid)getNode(nodeId);
 
 			b.getSpecies().register(b);
 			b.getSpecies().checkClasses(b);
@@ -629,7 +630,7 @@ public class BoidGraph extends AdjacencyListGraph {
 		 * long, java.lang.String)
 		 */
 		public void nodeRemoved(String sourceId, long timeId, String nodeId) {
-			Boid b = getNode(nodeId);
+			Boid b = (Boid) getNode(nodeId);
 			b.getSpecies().unregister(b);
 
 			for (BoidGraphListener listener : boidGraphListeners)
@@ -752,6 +753,8 @@ public class BoidGraph extends AdjacencyListGraph {
 	}
 
 	public static void main(String... args) {
+		System.setProperty("org.graphstream.ui", "javafx");
+
 		BoidGraph ctx = new BoidGraph();
 
 		try {

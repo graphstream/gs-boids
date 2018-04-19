@@ -30,11 +30,14 @@ package org.graphstream.boids.forces.greedy;
 
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import org.graphstream.boids.Boid;
 import org.graphstream.boids.BoidForces;
 import org.graphstream.boids.BoidGraph;
+import org.graphstream.graph.Node;
 import org.miv.pherd.geom.Point3;
 
 public class GreedyForces extends BoidForces {
@@ -85,12 +88,11 @@ public class GreedyForces extends BoidForces {
 	 */
 	public Collection<Boid> getNeighborhood() {
 		BoidGraph g = (BoidGraph) boid.getGraph();
-		LinkedList<Boid> contacts = new LinkedList<Boid>();
+		LinkedList<Boid> contacts = new LinkedList<>();
 
-		for (Boid b : g.<Boid> getEachNode()) {
-			if (isVisible(boid, b.getPosition()))
-				contacts.add(b);
-		}
+		g.nodes()
+				.filter(b -> isVisible(boid, ((Boid)b).getPosition()))
+				.forEachOrdered(b -> contacts.add((Boid)b));
 
 		return contacts;
 	}

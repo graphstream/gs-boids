@@ -31,6 +31,7 @@ package org.graphstream.boids;
 import java.awt.Color;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.stream.Collectors;
 
 import org.graphstream.boids.BoidGraph;
 import org.graphstream.graph.Node;
@@ -319,7 +320,7 @@ public class BoidSpecies implements Iterable<Boid> {
 
 	void checkClasses(Boid b) {
 		if (addSpeciesNameInUIClass) {
-			String uiClass = b.getAttribute("ui.class");
+			String uiClass = (String) b.getAttribute("ui.class");
 
 			if (uiClass == null)
 				uiClass = name;
@@ -367,11 +368,9 @@ public class BoidSpecies implements Iterable<Boid> {
 	}
 
 	/**
-	 * Create boids until population is at least count. If population is already
-	 * greater than count, nothing happens.
+	 * Create boids until population is at least initialCount. If population is already
+	 * greater than initialCount, nothing happens.
 	 * 
-	 * @param count
-	 *            the minimum boid count for this species
 	 */
 	public void populate() {
 		int count = initialCount - boids.size();
@@ -630,14 +629,11 @@ public class BoidSpecies implements Iterable<Boid> {
 	public void release() {
 		pop.release();
 
-		Iterator<Node> i = ctx.getNodeIterator();
-
-		while (i.hasNext()) {
-			Boid b = (Boid) i.next();
-			if (b.getSpecies() == this) {
-				i.remove();
-			}
-		}
+		ctx.nodes()
+				.filter(b -> ((Boid)b).getSpecies() == this )
+				.collect(Collectors.toList())
+				.stream()
+				.forEach(b ->ctx.removeNode(b));
 	}
 
 	/*

@@ -168,7 +168,7 @@ public class NTreeForcesFactory implements BoidForcesFactory, ElementSink {
 	 * java.lang.String)
 	 */
 	public void nodeAdded(String sourceId, long timeId, String nodeId) {
-		Boid b = ctx.getNode(nodeId);
+		Boid b = (Boid) ctx.getNode(nodeId);
 		pbox.addParticle(((NTreeForces) b.getForces()).p);
 	}
 
@@ -179,7 +179,7 @@ public class NTreeForcesFactory implements BoidForcesFactory, ElementSink {
 	 * long, java.lang.String)
 	 */
 	public void nodeRemoved(String sourceId, long timeId, String nodeId) {
-		Boid b = ctx.getNode(nodeId);
+		Boid b = (Boid) ctx.getNode(nodeId);
 		pbox.removeParticle(((NTreeForces) b.getForces()).p.getId());
 	}
 

@@ -30,7 +30,9 @@ package org.graphstream.boids;
 
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.stream.Collectors;
 
+import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.AbstractGraph;
 import org.graphstream.graph.implementations.AdjacencyListNode;
 import org.miv.pherd.geom.Point3;
@@ -56,6 +58,7 @@ import org.miv.pherd.geom.Point3;
  * @author Guilhelm Savin
  * @author Antoine Dutot
  */
+
 public class Boid extends AdjacencyListNode {
 
 	/** Parameters of this group of boids. */
@@ -115,36 +118,27 @@ public class Boid extends AdjacencyListNode {
 		}
 
 		if (boids != null) {
-			Iterator<Boid> it = getNeighborNodeIterator();
-			LinkedList<Boid> toRemove = null;
 
-			while (it.hasNext()) {
+
+			// remove old edges
+			neighborNodes()
+					.filter(b -> {
 				boolean found = false;
-				Boid b = it.next();
-
 				for (Boid b2 : boids) {
 					if (b == b2) {
 						found = true;
 						break;
 					}
 				}
+				return !found && !forces.isVisible((Boid) b, this.getPosition());
+			})
+					.collect(Collectors.toList())
+					.forEach( b ->  {
+						getGraph().removeEdge(getEdgeId(this, (Boid) b));
+					});
 
-				if (!found && !forces.isVisible(b, this.getPosition())) {
-					if (toRemove == null)
-						toRemove = new LinkedList<Boid>();
 
-					toRemove.add(b);
-				}
-			}
-
-			if (toRemove != null) {
-				for (Boid b : toRemove)
-					getGraph().removeEdge(getEdgeId(this, b));
-
-				toRemove.clear();
-				toRemove = null;
-			}
-
+			// add new edges
 			for (Boid b2 : boids) {
 				if (getEdgeBetween(b2) == null
 						&& getDegree() < species.maxNeighborhood) {

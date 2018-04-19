@@ -67,13 +67,13 @@ public class GreedyForcesFactory implements BoidForcesFactory {
 	 * @see org.graphstream.boids.BoidForcesFactory#step()
 	 */
 	public void step() {
-		for (Boid b : ctx.<Boid> getEachNode())
-			b.getForces().compute();
 
-		for (Boid b : ctx.<Boid> getEachNode()) {
-			BoidForces f = b.getForces();
+		ctx.nodes().forEach(b -> ((Boid)b).getForces().compute());
+
+		ctx.nodes().forEach(b -> {
+			BoidForces f =  ((Boid)b).getForces();
 			f.getPosition().copy(f.getNextPosition());
-		}
+		});
 	}
 
 	/*
